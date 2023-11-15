@@ -75,18 +75,29 @@ def drop_column(visit_data, travel_data, user_data):
     print(visit_data.isnull().sum())
     print(travel_data.isnull().sum())
     print(user_data.isnull().sum())
+    #
+    # visit_data.to_csv("visit.csv")
+    # travel_data.to_csv("travel.csv")
+    # user_data.to_csv("user.csv")
+    return visit_data, travel_data, user_data
 
-    visit_data.to_csv("visit.csv")
-    travel_data.to_csv("travel.csv")
-    user_data.to_csv("user.csv")
+# join 해야할까?
+# -> 그냥 찾아 쓰면 되지않을까??
+def join_dataset(visit_data, travel_data, user_data):
+    print(visit_data.head(5))
+    print(travel_data.head(5))
+    print(user_data.head(5))
+
+    return visit_data, travel_data, user_data
 
 def main():
-    visit_data = pd.read_csv(".dataset/수도권/tn_visit_area_info_방문지정보_A.csv")
-    travel_data = pd.read_csv(".dataset/수도권/tn_travel_여행_A.csv")
-    user_data = pd.read_csv(".dataset/수도권/tn_traveller_master_여행객 Master_A.csv")
+    visit_data = pd.read_csv("dataset/수도권/tn_visit_area_info_방문지정보_A.csv")
+    travel_data = pd.read_csv("dataset/수도권/tn_travel_여행_A.csv")
+    user_data = pd.read_csv("dataset/수도권/tn_traveller_master_여행객 Master_A.csv")
     # 안 쓸 것 같음
-    code_b_data = pd.read_csv(".dataset/수도권/tc_codeb_코드B.csv")
-    drop_column(visit_data, travel_data, user_data)
+    # code_b_data = pd.read_csv(".dataset/수도권/tc_codeb_코드B.csv")
+    visit_data, travel_data, user_data = drop_column(visit_data, travel_data, user_data)
+    visit_data, travel_data, user_data = join_dataset(visit_data, travel_data, user_data)
 
 if __name__ == "__main__":
     main()
