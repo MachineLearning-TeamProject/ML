@@ -38,9 +38,32 @@ def drop_non_spots(table):
 
 def same_name_same_id(table):
     table['VISIT_ID'] = table.groupby('VISIT_AREA_NM')['VISIT_AREA_ID'].transform('min')
+    # Reordering
+    # table = table.reindex([table.columns[-1]] + table.columns[:-1].to_list(), axis=1)
     return table
 
+def make_user_feature(table, ids, feature1, feature2, feature3):
+    table.loc[ids, "NUMBER_OF_PERSON"] = feature1
+    table.loc[ids, "CHILDREN"] = feature2
+    table.loc[ids, "PARENTS"] = feature3
+    return table
 
+# 나홀로 여행 -> 인원수:1 / 자녀 동반 여부: false / 부모 동반여부: false
+def split_feature(table):
+    for ids, data in enumerate(table['TRAVEL_STATUS_ACCOMPANY']):
+        if not data.find("나홀로"):
+            table = make_user_feature(table, ids, 1, 0, 0)
+        elif not data.find("자녀"):
+            table = make_user_feature(table, ids, 3, 1, 0)
+        elif not data.find("2"):
+            table = make_user_feature(table, ids, 2, 0, 0)
+        elif not data.find("가족 외"):
+            table = make_user_feature(table, ids, 3, 0, 1)
+        else:
+            table = make_user_feature(table, ids, 3, 0, 0)
+    # table = drop_columns(table, "TRAVEL_STATUS_ACCOMPANY")
+
+    return table
 
 # -------------------------
 # Main Table Processing
@@ -87,8 +110,11 @@ def process_table(table, table_name):
     if table_name == "visit":
         table = same_name_same_id(table)
 
-    return table
+    # Feature 나누기 나홀로 여행 -> 인원수:1 / 자녀 동반 여부: false / 부모 동반여부: false
+    if table_name == "user":
+        table = split_feature(table)
 
+    return table
 
 if __name__ == "__main__":
     
@@ -106,3 +132,4 @@ if __name__ == "__main__":
     processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
     processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
     processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
+
