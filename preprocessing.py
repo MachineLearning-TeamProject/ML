@@ -73,7 +73,7 @@ def process_table(table, table_name):
     if table_name == "visit":
         table = merge_dates(table, "VISIT_START_YMD", "VISIT_MM")
     elif table_name == "travel":
-        table = merge_dates(table, "TRAVEL_START_YMD", "VISIT_MM")
+        table = merge_dates(table, "TRAVEL_START_YMD", "TRAVEL_MM")
 
     # 각 테이블에 따른 추가 제거할 열
     if table_name == 'visit':
@@ -116,6 +116,27 @@ def process_table(table, table_name):
 
     return table
 
+def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
+    print(weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN'])
+
+def merge_table(visit, travel, user):
+    merge_table = pd.merge(travel,user, how='inner',on='TRAVELER_ID')
+    merge_table = pd.merge(visit, merge_table, how='inner',on='TRAVEL_ID')
+
+    ## Reordering
+    merge_table = merge_table[['VISIT_ID', 'VISIT_AREA_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
+        'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
+        'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'VISIT_MM', 'TRAVEL_MM',
+        'TRAVEL_NM', 'MVMN_NM', 'TRAVEL_STYL_1',
+        'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7',
+        'TRAVEL_STYL_8', 'TRAVEL_STATUS_ACCOMPANY', 'NUMBER_OF_PERSON',
+        'CHILDREN', 'PARENTS'
+        ]]
+
+    merge_table = drop_columns(merge_table, ['VISIT_AREA_ID', 'TRAVEL_MM', 'TRAVEL_MM', 'TRAVEL_STATUS_ACCOMPANY'])
+
+    return merge_table
+
 if __name__ == "__main__":
     
     # open the file
@@ -127,9 +148,13 @@ if __name__ == "__main__":
     processed_visit_data = process_table(visit_data, "visit")
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
-    
-    # # save the file
-    processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
-    processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
-    processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
+
+    merge_tables = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+
+    # get_rating(visit_data)
+    # # # save the file
+    merge_tables.to_csv("dataset/data_after_preprocessing/dataset.csv")
+    # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
+    # processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
+    # processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
 
