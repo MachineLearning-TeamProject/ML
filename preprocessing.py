@@ -116,8 +116,10 @@ def process_table(table, table_name):
 
     return table
 
+## 16.5점 만점
 def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
-    print(weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN'])
+    table['rating'] = weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN']
+    return table
 
 def merge_table(visit, travel, user):
     merge_table = pd.merge(travel,user, how='inner',on='TRAVELER_ID')
@@ -149,11 +151,11 @@ if __name__ == "__main__":
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
 
-    merge_tables = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+    table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
 
-    # get_rating(visit_data)
+    table = get_rating(table)
     # # # save the file
-    merge_tables.to_csv("dataset/data_after_preprocessing/dataset.csv")
+    table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
     # processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
     # processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
