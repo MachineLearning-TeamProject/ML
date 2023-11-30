@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -150,37 +152,53 @@ def user_based(table, user_id):
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
     knn.fit(table.values)
     distances, indices = knn.kneighbors(table.values, n_neighbors=21)
-    cosine_similarity_ = 1 - distances
+    cosine_similarity_ = np.array(1 - distances)
 
-    sim_ind = indices.tolist()[table.index.tolist().index(user_id)][1:]
+    sim_user = indices.tolist()[table.index.tolist().index(user_id)][1:]
 
     ## weighted ratings page 25
     ## cosine_sim * visit rating / sum(cosine_sim)
-    result = np.matmul(np.array(cosine_similarity_.tolist()[table.index.tolist().index(user_id)][1:]),
-                    np.array(table.iloc[sim_ind]))\
-             /np.matmul(np.array(cosine_similarity_.tolist()[table.index.tolist().index(user_id)][1:]),
-                    np.array(table.iloc[sim_ind]!=0))
-    print(pd.DataFrame(result, index=table.columns, columns=[user_id]).fillna(0))
-    ## Evaluation function
+    result = np.matmul(cosine_similarity_[table.index.tolist().index(user_id)][1:],table.iloc[sim_user])\
+             /np.matmul(cosine_similarity_[table.index.tolist().index(user_id)][1:],table.iloc[sim_user]!=0)
 
-def item_based(table):
+    result = pd.DataFrame(result, index=table.columns, columns=[user_id]).fillna(0)
+
+    result.to_csv("dataset/data_after_preprocessing/user_based.csv")
+    ## Evaluation function
+    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
+    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
+
+def item_based(table, user_id):
     # table = table.pivot_table(index='VISIT_ID',columns='TRAVELER_ID',values='RATING').fillna(0).to_csv("dataset/data_after_preprocessing/pivot.csv")
     ## Rating Matrix 만들기
     table = table.pivot_table(index='VISIT_ID', columns='TRAVELER_ID', values='RATING').fillna(0)
 
-    ## Cosine simlarity가 가장 높은거 N개 뽑기
-    # number_neighbors = 3
-    # knn = NearestNeighbors(metric='cosine', algorithm='brute')
-    # knn.fit(pd.DataFrame.values)
-    # distances, indices = knn.kneighbors(table.values, n_neighbors=number_neighbors)
-    # cosine_similarity = 1 - distances
-    # print(cosine_similarity)
-    # exit()
+    knn = NearestNeighbors(metric='cosine', algorithm='brute')
+    knn.fit(table.values)
+    distances, indices = knn.kneighbors(table.values, n_neighbors=21)
+    cosine_similarity_ = np.array(1 - distances)
 
-    # search user_1 np.nan value
-    user_index = table.columns.tolist().index('User_1')
-    print(table.shape)
-    print(cosine_similarity(table).shape)
+    # 유사한 방문지 20개 뽑기 ##자기 제외
+    sim_ind = np.array(indices)[:, 1:]
+
+    ## weighted ratings page 49
+    ## cosine_sim * visit rating / sum(cosine_sim)
+    result = table[user_id]
+
+    ## 가보지 않은 visit index 추출
+    index = result[result == 0].index
+
+    res = np.sum(np.array(np.sum(table, axis=1)/np.sum(table != 0, axis=1))[sim_ind]
+                 *cosine_similarity_[:,1:], axis=1) /cosine_similarity_[:,1:].sum(axis=1)
+    res = pd.DataFrame(res, index=result.index, columns=[user_id]).loc[index].fillna(0)
+    result.loc[index] = np.array(res).flatten()
+
+    result.to_csv("dataset/data_after_preprocessing/item_based.csv")
+
+    ## Evaluation function
+    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
+    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
+
 
 if __name__ == "__main__":
     
@@ -198,6 +216,7 @@ if __name__ == "__main__":
 
     table = get_rating(table)
     user_based_result  = user_based(table, 'a000012')
+    item_based_result = item_based(table, 'a000012')
     # # # save the file
     # table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
