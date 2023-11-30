@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import NearestNeighbors
+import warnings
 
+warnings.filterwarnings(action = 'ignore')
 # -----------------
 # Utility Functions
 # -----------------
@@ -118,7 +122,7 @@ def process_table(table, table_name):
 
 ## 16.5점 만점
 def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
-    table['rating'] = weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN']
+    table['RATING'] = weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN']
     return table
 
 def merge_table(visit, travel, user):
@@ -139,6 +143,45 @@ def merge_table(visit, travel, user):
 
     return merge_table
 
+def user_based(table, user_id):
+    # table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0).to_csv("dataset/data_after_preprocessing/pivot.csv")
+    table = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
+
+    knn = NearestNeighbors(metric='cosine', algorithm='brute')
+    knn.fit(table.values)
+    distances, indices = knn.kneighbors(table.values, n_neighbors=21)
+    cosine_similarity_ = 1 - distances
+
+    sim_ind = indices.tolist()[table.index.tolist().index(user_id)][1:]
+
+    ## weighted ratings page 25
+    ## cosine_sim * visit rating / sum(cosine_sim)
+    result = np.matmul(np.array(cosine_similarity_.tolist()[table.index.tolist().index(user_id)][1:]),
+                    np.array(table.iloc[sim_ind]))\
+             /np.matmul(np.array(cosine_similarity_.tolist()[table.index.tolist().index(user_id)][1:]),
+                    np.array(table.iloc[sim_ind]!=0))
+    print(pd.DataFrame(result, index=table.columns, columns=[user_id]).fillna(0))
+    ## Evaluation function
+
+def item_based(table):
+    # table = table.pivot_table(index='VISIT_ID',columns='TRAVELER_ID',values='RATING').fillna(0).to_csv("dataset/data_after_preprocessing/pivot.csv")
+    ## Rating Matrix 만들기
+    table = table.pivot_table(index='VISIT_ID', columns='TRAVELER_ID', values='RATING').fillna(0)
+
+    ## Cosine simlarity가 가장 높은거 N개 뽑기
+    # number_neighbors = 3
+    # knn = NearestNeighbors(metric='cosine', algorithm='brute')
+    # knn.fit(pd.DataFrame.values)
+    # distances, indices = knn.kneighbors(table.values, n_neighbors=number_neighbors)
+    # cosine_similarity = 1 - distances
+    # print(cosine_similarity)
+    # exit()
+
+    # search user_1 np.nan value
+    user_index = table.columns.tolist().index('User_1')
+    print(table.shape)
+    print(cosine_similarity(table).shape)
+
 if __name__ == "__main__":
     
     # open the file
@@ -154,8 +197,9 @@ if __name__ == "__main__":
     table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
 
     table = get_rating(table)
+    user_based_result  = user_based(table, 'a000012')
     # # # save the file
-    table.to_csv("dataset/data_after_preprocessing/dataset.csv")
+    # table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
     # processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
     # processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
