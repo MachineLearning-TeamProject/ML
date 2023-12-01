@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
+from sklearn.decomposition import TruncatedSVD
 import warnings
 
 warnings.filterwarnings(action = 'ignore')
@@ -199,6 +200,23 @@ def item_based(table, user_id):
     ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
     ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
 
+def singular_value_decomposition(table):
+    ## https://lsjsj92.tistory.com/m/569
+    ## https://maxtime1004.tistory.com/m/91
+    table = table.pivot_table(index='VISIT_ID', columns='TRAVELER_ID', values='RATING').fillna(0)
+    SVD = TruncatedSVD(n_components=12)
+    matrix = SVD.fit_transform(table)
+
+    corr = np.corrcoef(matrix)
+    visit_list = table.index
+    ## visit id 값 넣는 건데 이건 나중에 userid 받고
+    ## 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
+    coffey_hands = list(visit_list).index(2208040003)
+    # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
+    print(list(visit_list[(corr[coffey_hands]>=0.9)]))
+
+    # 추후에 좀 많이 다듬어야할 것 같음
+    # return 0
 
 if __name__ == "__main__":
     
@@ -217,6 +235,7 @@ if __name__ == "__main__":
     table = get_rating(table)
     user_based_result  = user_based(table, 'a000012')
     item_based_result = item_based(table, 'a000012')
+    singular_value_decomposition(table)
     # # # save the file
     # table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
