@@ -44,11 +44,21 @@ def drop_non_spots(table):
     return table_with_only_touristSpots
 
 def same_name_same_id(table):
-    table['VISIT_ID'] = table.groupby('VISIT_AREA_NM')['VISIT_AREA_ID'].transform('min')
+    # table['VISIT_ID'] = table.groupby('VISIT_AREA_NM')['VISIT_AREA_ID'].transform('min')
+    
+    # VISIT_AREA_NM으로 groupby한 뒤, 앞에서부터 visit_id를 부여
+    # print(table.groupby('VISIT_AREA_NM').cumcount() +1 .head())
+    table['VISIT_ID'] = table.groupby('VISIT_AREA_NM').ngroup() + 1
+    print(table.head(10))
+    
+    
+    is_unique = not table['VISIT_ID'].duplicated().any()
+
+    print(f"All values in 'VISIT_ID' are unique: {is_unique}")
     # Reordering
     # table = table.reindex([table.columns[-1]] + table.columns[:-1].to_list(), axis=1)
     return table
-
+ 
 def make_user_feature(table, ids, feature1, feature2, feature3):
     table.loc[ids, "NUMBER_OF_PERSON"] = feature1
     table.loc[ids, "CHILDREN"] = feature2
@@ -88,8 +98,10 @@ def process_table(table, table_name):
                                             'POI_ID','POI_NM', 'VISIT_CHC_REASON_CD', 'LODGING_TYPE_CD', 'SGG_CD', 'VISIT_START_YMD', 'VISIT_END_YMD',
                                             'VISIT_START_YMD', 'VISIT_END_YMD']
                                             
-    elif table_name == 'travel':
-        columns_to_drop = ['TRAVEL_PURPOSE', 'TRAVEL_PERSONA', 'TRAVEL_MISSION', 'TRAVEL_MISSION_CHECK',
+    elif table_name == 'travel': 
+        # columns_to_drop = ['TRAVEL_PURPOSE', 'TRAVEL_PERSONA', 'TRAVEL_MISSION', 'TRAVEL_MISSION_CHECK',
+        #                                     'TRAVEL_START_YMD','TRAVEL_END_YMD']
+        columns_to_drop = ['TRAVEL_PERSONA', 'TRAVEL_MISSION_CHECK',
                                             'TRAVEL_START_YMD','TRAVEL_END_YMD']
     elif table_name == 'user':
         columns_to_drop = ['RESIDENCE_SGG_CD','GENDER','AGE_GRP','EDU_NM','EDU_FNSH_SE','MARR_STTS','FAMILY_MEMB','JOB_NM',
@@ -139,7 +151,7 @@ def merge_table(visit, travel, user):
         'TRAVEL_NM', 'MVMN_NM', 'TRAVEL_STYL_1',
         'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7',
         'TRAVEL_STYL_8', 'TRAVEL_STATUS_ACCOMPANY', 'NUMBER_OF_PERSON',
-        'CHILDREN', 'PARENTS'
+        'CHILDREN', 'PARENTS', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION'
         ]]
 
     merge_table = drop_columns(merge_table, ['VISIT_AREA_ID', 'TRAVEL_MM', 'TRAVEL_MM', 'TRAVEL_STATUS_ACCOMPANY'])
@@ -233,12 +245,12 @@ if __name__ == "__main__":
     table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
 
     table = get_rating(table)
-    user_based_result  = user_based(table, 'a000012')
-    item_based_result = item_based(table, 'a000012')
-    singular_value_decomposition(table)
+    # user_based_result  = user_based(table, 'a000012')
+    # item_based_result = item_based(table, 'a000012')
+    # singular_value_decomposition(table)
     # # # save the file
-    # table.to_csv("dataset/data_after_preprocessing/dataset.csv")
-    # processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
-    # processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
-    # processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
+    table.to_csv("dataset/data_after_preprocessing/dataset.csv")
+    processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
+    processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
+    processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
 
