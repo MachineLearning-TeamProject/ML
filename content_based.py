@@ -1,65 +1,37 @@
 import pandas as pd
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import NearestNeighbors
-import warnings
-
-warnings.filterwarnings(action = 'ignore')
-
-THRESHOLD = 13
 
 if __name__ == "__main__":
-    
-    # 1. travel table 관련 tag
-    # open the file 
-    table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
 
-    # 미션 
+    # 여행지 데이터 불러오기
+    travel_table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
+
+    # 미션
     mission_name = ['쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
-     '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
-     '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
-     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
-    
+    '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
+    '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
+    '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
+
     mission_code = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 21, 22, 23, 24, 25, 26, 27]
 
     missions = {code: name for code, name in zip(mission_code, mission_name)}
-    
+
     # RATING이 13 이상인 행을 선택
-    selected_rows = table[table['RATING'] >= 13]
+    selected_rows = travel_table[travel_table['RATING'] >= 13]
 
     # 선택된 행들을 순회하면서 missions 열을 활성화
     for index, row in selected_rows.iterrows():
-        
         purpose_list = list(map(int, row['TRAVEL_PURPOSE'].strip(';').split(';')))
         for purpose in purpose_list:
             if purpose > 27 or (purpose > 13 and purpose < 21):
                 continue
             mission_column = missions[purpose]
-            table.loc[index, mission_column] = 1
+            travel_table.loc[index, mission_column] = 1
 
     # NaN 값을 0으로 채움
-    table = table.fillna(0)
+    travel_table = travel_table.fillna(0)
 
-    selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
-     '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
-     '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
-     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
-    
-    print(selected_feature)
-    table = table[selected_feature]
-
-
-    # 같은 여행지인 경우, TAG값을 평균내서 적기
-    table = table.groupby('VISIT_ID').agg('mean')
-
-    table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
-
-
-
-
-    # 2. user table 관련 tag
-    # open the file
-    table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
+    # user table 관련 tag
+    user_table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
 
     # 여행스타일에 따른 조건 함수 정의
     def apply_travel_style(row):
@@ -105,28 +77,45 @@ if __name__ == "__main__":
         return row
 
     # apply_travel_style 함수를 모든 행에 적용하여 각 열에 값을 할당
-    table = table.apply(apply_travel_style, axis=1)
-
-    # 결과 출력
-    print(table)
+    user_table = user_table.apply(apply_travel_style, axis=1)
 
     # NaN 값을 0으로 채움
-    table = table.fillna(0)
+    user_table = user_table.fillna(0)
 
-    selected_feature = ['VISIT_ID', '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
+    # travel tag와 user tag를 포함하는 테이블 만들기
+    merged_table = pd.merge(travel_table, user_table, on='VISIT_ID', how='inner')
+
+    # 행 정리
+    travel_table_selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
+     '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
+     '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
+     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
+    
+    travel_table = travel_table[travel_table_selected_feature]
+
+    user_table_selected_feature = ['VISIT_ID', '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
     '상황에 따른 여행', '새로운 지역', '알려지지 않은 방문지', '익숙한 지역',
     '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식']
     
-    print(selected_feature)
-    table = table[selected_feature]
-
+    user_table = user_table[user_table_selected_feature]
+    
+    merged_table_selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
+     '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
+     '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
+     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)',
+     '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
+    '상황에 따른 여행', '새로운 지역', '알려지지 않은 방문지', '익숙한 지역',
+    '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식']
+    
+    merged_table = merged_table[merged_table_selected_feature]
 
     # 같은 여행지인 경우, TAG값을 평균내서 적기
-    table = table.groupby('VISIT_ID').agg('mean')
+    travel_table = travel_table.groupby('VISIT_ID').agg('mean')
+    user_table = user_table.groupby('VISIT_ID').agg('mean')
+    merged_table = merged_table.groupby('VISIT_ID').agg('mean')
 
-    table.to_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
 
-
-    # 3. user + travel table 관련 tag
-
-    
+    # 결과를 CSV 파일로 저장
+    travel_table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
+    user_table.to_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
+    merged_table.to_csv("dataset/data_after_preprocessing/content_based_combined.csv")
