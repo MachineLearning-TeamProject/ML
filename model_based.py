@@ -6,61 +6,59 @@ from scipy.sparse.linalg import svds
 from scipy.linalg import svd
 from numpy import linalg as la
 
-## 다시해봐야할 듯
-def get_k(sigma,percentage):
-    sigma_sqr=sigma**2
-    sum_sigma_sqr=sum(sigma_sqr)
-    k_sum_sigma=0
-    k=0
-    for i in sigma:
-        k_sum_sigma+=i**2
-        k+=1
-        if k_sum_sigma>=sum_sigma_sqr*percentage:
-            return k
-
-def ecludSim(inA,inB):
-    return 1.0/(1.0+la.norm(inA-inB))
+## 확인필요
+# def get_k(sigma,percentage):
+#     sigma_sqr=sigma**2
+#     sum_sigma_sqr=sum(sigma_sqr)
+#     k_sum_sigma=0
+#     k=0
+#     for i in sigma:
+#         k_sum_sigma+=i**2
+#         k+=1
+#         if k_sum_sigma>=sum_sigma_sqr*percentage:
+#             return k
+#
+# def ecludSim(inA,inB):
+#     return 1.0/(1.0+la.norm(inA-inB))
 
 def singular_value_decomposition(table):
+    # hyperparameter n_components
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
-    # SVD = TruncatedSVD(n_components=100)
-    # matrix = SVD.fit_transform(table)
-    n = table.shape[1]
-    user_rating = table[1]['a000012']
-    print(user_rating)
-    exit()
-    u, sigma, vt = svd(table)
-    print(u.shape)
-    print(sigma.shape)
-    print(vt.shape)
-    k = get_k(sigma, 0.9)
-    # Construct the diagonal matrix
-    sigma_k = np.diag(sigma[:k])
-    # Convert the original data to k-dimensional space (lower dimension)
-    formed_items = np.around(np.dot(np.dot(u[:, :k], sigma_k), vt[:k, :]), decimals=3)
-    for j in table.columns:
-        user_rating = table['a000012', j]
-        print(user_rating)
-        # if user_rating == 0 or j == item: continue
-        # # the similarity between item and item j
-        # similarity = simMeas(formed_items[item, :].T, formed_items[j, :].T)
-        # sim_total += similarity
-        # # product of similarity and the rating of user to item j, then sum
-        # rat_sim_total += similarity * user_rating
-        # if sim_total == 0:
-        #     return 0
-        # else:
-        #     return np.round(rat_sim_total / sim_total, decimals=3)
-    exit()
-    # corr = np.corrcoef(matrix)
-    # visit_list = table.index
-    ## visit id 값 넣는 건데 이건 나중에 userid 받고
-    ## 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
-    # coffey_hands = list(visit_list).index(1)
-    # # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
-    # print(list(visit_list[(corr[coffey_hands]>=0.9)]))
-    # exit()
+    SVD = TruncatedSVD(n_components=100)
+    matrix = SVD.fit_transform(table)
+    print(matrix.shape)
+    # u, sigma, vt = svd(table)
+    # # print(u.shape)
+    # # print(sigma.shape)
+    # # print(vt.shape)
+    # k = get_k(sigma, 0.9)
+    # # Construct the diagonal matrix
+    # sigma_k = np.diag(sigma[:k])
+    # # Convert the original data to k-dimensional space (lower dimension)
+    # formed_items = np.around(np.dot(np.dot(u[:, :k], sigma_k), vt[:k, :]), decimals=3)
+    # 방문지
+
+    # for j in table.columns:
+    #     user_rating = table[j]['a000012']
+    #     if user_rating == 0 or j == item: continue
+    #     # the similarity between item and item j
+    #     similarity = simMeas(formed_items[item, :].T, formed_items[j, :].T)
+    #     sim_total += similarity
+    #     # product of similarity and the rating of user to item j, then sum
+    #     rat_sim_total += similarity * user_rating
+    #     if sim_total == 0:
+    #         return 0
+    #     else:
+    #         return np.round(rat_sim_total / sim_total, decimals=3)
+    corr = np.corrcoef(matrix)
+    pd.DataFrame(corr).to_csv("corr.csv")
+    visit_list = table.index
+    # visit id 값 넣는 건데 이건 나중에 userid 받고
+    # 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
+    coffey_hands = list(visit_list).index(2)
+    # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
+    print(list(visit_list[(corr[coffey_hands]>=0.9)]))
 
     # 추후에 좀 많이 다듬어야할 것 같음
     # return 0
@@ -220,19 +218,3 @@ class MatrixFactorization():
         print(self.get_complete_matrix())
         print("Final RMSE:")
         print(self._training_process[self._epochs-1][1])
-
-
-# run example
-if __name__ == "__main__":
-    # rating matrix - User X Item : (7 X 5)
-    R = np.array([
-        [1, 0, 0, 1, 3],
-        [2, 0, 3, 1, 1],
-        [1, 2, 0, 5, 0],
-        [1, 0, 0, 4, 4],
-        [2, 1, 5, 4, 0],
-        [5, 1, 5, 4, 0],
-        [0, 0, 0, 1, 0],
-    ])
-
-    # P, Q is (7 X k), (k X 5) matrix

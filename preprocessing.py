@@ -184,11 +184,11 @@ if __name__ == "__main__":
     item_based_result = item_based(user_visit_rating_matrix.T.copy(), 'a000012')
 
     ## Model-based Filterting
-    # singular_value_decomposition(user_visit_rating_matrix)
+    singular_value_decomposition(user_visit_rating_matrix.T.copy())
     #
-    # factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
-    # factorizer.fit()
-    # factorizer.print_results()
+    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    factorizer.fit()
+    factorizer.print_results()
 
     # # # save the file
     table.to_csv("dataset/data_after_preprocessing/dataset.csv")
