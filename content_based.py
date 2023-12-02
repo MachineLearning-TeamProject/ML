@@ -10,6 +10,7 @@ THRESHOLD = 13
 
 if __name__ == "__main__":
     
+    # 1. travel table 관련 tag
     # open the file 
     table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
 
@@ -39,18 +40,93 @@ if __name__ == "__main__":
     # NaN 값을 0으로 채움
     table = table.fillna(0)
 
-    content_based_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
+    selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
      '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
      '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
      '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
     
-    print(content_based_feature)
-    table = table[content_based_feature]
-
+    print(selected_feature)
+    table = table[selected_feature]
 
 
     # 같은 여행지인 경우, TAG값을 평균내서 적기
     table = table.groupby('VISIT_ID').agg('mean')
-    table.to_csv("dataset/data_after_preprocessing/content_based.csv")
+
+    table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
+
+
+
+
+    # 2. user table 관련 tag
+    # open the file
+    table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
+
+    # 여행스타일에 따른 조건 함수 정의
+    def apply_travel_style(row):
+        rating_threshold = 14
+        
+        # 여행스타일1 (자연 도시)
+        if (1 <= row['TRAVEL_STYL_1'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['자연'] = 1
+        elif (6 <= row['TRAVEL_STYL_1'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['도시'] = 1
+        
+        # TRAVEL_STYL_3 (새로운 지역 익숙한 지역)
+        elif (1 <= row['TRAVEL_STYL_3'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['새로운 지역'] = 1
+        elif (6 <= row['TRAVEL_STYL_3'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['익숙한 지역'] = 1
+        
+        # TRAVEL_STYL_5 (휴양/휴식 체험활동)
+        elif (1 <= row['TRAVEL_STYL_5'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['휴양/휴식'] = 1
+        elif (6 <= row['TRAVEL_STYL_5'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['체험활동'] = 1
+        
+        # TRAVEL_STYL_6 (잘 알려지지 않은 방문지 알려진 방문지)
+        elif (1 <= row['TRAVEL_STYL_6'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['잘 알려지지 않은 방문지'] = 1
+        elif (6 <= row['TRAVEL_STYL_6'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['알려지지 않은 방문지'] = 1
+        
+        # TRAVEL_STYL_7 (계획에 따른 여행 상황에 따른 여행)
+        elif (1 <= row['TRAVEL_STYL_7'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['계획에 따른 여행'] = 1
+        elif (6 <= row['TRAVEL_STYL_7'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['상황에 따른 여행'] = 1
+        
+        # TRAVEL_STYL_8 (사진촬영 중요하지 않음 사진촬영 중요)
+        elif (1 <= row['TRAVEL_STYL_8'] <= 2) and (row['RATING'] >= rating_threshold):
+            row['사진촬영 중요하지 않음'] = 1
+        elif (6 <= row['TRAVEL_STYL_8'] <= 7) and (row['RATING'] >= rating_threshold):
+            row['사진촬영 중요'] = 1
+        
+        # 그 외의 경우
+        return row
+
+    # apply_travel_style 함수를 모든 행에 적용하여 각 열에 값을 할당
+    table = table.apply(apply_travel_style, axis=1)
+
+    # 결과 출력
+    print(table)
+
+    # NaN 값을 0으로 채움
+    table = table.fillna(0)
+
+    selected_feature = ['VISIT_ID', '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
+    '상황에 따른 여행', '새로운 지역', '알려지지 않은 방문지', '익숙한 지역',
+    '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식']
+    
+    print(selected_feature)
+    table = table[selected_feature]
+
+
+    # 같은 여행지인 경우, TAG값을 평균내서 적기
+    table = table.groupby('VISIT_ID').agg('mean')
+
+    table.to_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
+
+
+    # 3. user + travel table 관련 tag
 
     
