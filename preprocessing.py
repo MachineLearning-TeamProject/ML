@@ -1,11 +1,11 @@
-import sys
-
 import pandas as pd
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import NearestNeighbors
-from sklearn.decomposition import TruncatedSVD
 import warnings
+
+
+from collaborative_filtering import user_based, item_based
+
+from model_based import MatrixFactorization, singular_value_decomposition
 
 warnings.filterwarnings(action = 'ignore')
 # -----------------
@@ -49,8 +49,6 @@ def same_name_same_id(table):
     # VISIT_AREA_NM으로 groupby한 뒤, 앞에서부터 visit_id를 부여
     # print(table.groupby('VISIT_AREA_NM').cumcount() +1 .head())
     table['VISIT_ID'] = table.groupby('VISIT_AREA_NM').ngroup() + 1
-    print(table.head(10))
-    
     
     is_unique = not table['VISIT_ID'].duplicated().any()
 
@@ -128,6 +126,7 @@ def process_table(table, table_name):
     # 같은 방문지 이름이면 같은 id 부여하기
     if table_name == "visit":
         table = same_name_same_id(table)
+        table = get_rating(table)
 
     # Feature 나누기 나홀로 여행 -> 인원수:1 / 자녀 동반 여부: false / 부모 동반여부: false
     if table_name == "user":
@@ -143,92 +142,26 @@ def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
 def merge_table(visit, travel, user):
     merge_table = pd.merge(travel,user, how='inner',on='TRAVELER_ID')
     merge_table = pd.merge(visit, merge_table, how='inner',on='TRAVEL_ID')
-
     ## Reordering
-    merge_table = merge_table[['VISIT_ID', 'VISIT_AREA_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
-        'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
-        'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'VISIT_MM', 'TRAVEL_MM',
-        'TRAVEL_NM', 'MVMN_NM', 'TRAVEL_STYL_1',
-        'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7',
-        'TRAVEL_STYL_8', 'TRAVEL_STATUS_ACCOMPANY', 'NUMBER_OF_PERSON',
-        'CHILDREN', 'PARENTS', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION'
-        ]]
-
-    merge_table = drop_columns(merge_table, ['VISIT_AREA_ID', 'TRAVEL_MM', 'TRAVEL_MM', 'TRAVEL_STATUS_ACCOMPANY'])
+    # merge_table = merge_table[['VISIT_ID', 'VISIT_AREA_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
+    #        'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
+    #        'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'RATING', 'VISIT_MM',
+    #         'TRAVEL_NM', 'MVMN_NM', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION', 'TRAVEL_MM',
+    #        'TRAVEL_STYL_1', 'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7', 'TRAVEL_STYL_8',
+    #        'TRAVEL_STATUS_ACCOMPANY', 'NUMBER_OF_PERSON', 'CHILDREN', 'PARENTS']]
+    merge_table = merge_table[['VISIT_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
+                               'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
+                               'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'RATING', 'VISIT_MM',
+                               'MVMN_NM', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION', 'TRAVEL_MM',
+                               'TRAVEL_STYL_1', 'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7',
+                               'TRAVEL_STYL_8', 'NUMBER_OF_PERSON', 'CHILDREN', 'PARENTS']]
+    # 위에서 일괄 드랍
+    # merge_table = drop_columns(merge_table, ['VISIT_AREA_ID', 'TRAVEL_MM', 'TRAVEL_MM', 'TRAVEL_STATUS_ACCOMPANY'])
 
     return merge_table
 
-def user_based(table, user_id):
-    # table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0).to_csv("dataset/data_after_preprocessing/pivot.csv")
-    table = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
-    knn = NearestNeighbors(metric='cosine', algorithm='brute')
-    knn.fit(table.values)
-    distances, indices = knn.kneighbors(table.values, n_neighbors=21)
-    cosine_similarity_ = np.array(1 - distances)
 
-    sim_user = indices.tolist()[table.index.tolist().index(user_id)][1:]
-
-    ## weighted ratings page 25
-    ## cosine_sim * visit rating / sum(cosine_sim)
-    result = np.matmul(cosine_similarity_[table.index.tolist().index(user_id)][1:],table.iloc[sim_user])\
-             /np.matmul(cosine_similarity_[table.index.tolist().index(user_id)][1:],table.iloc[sim_user]!=0)
-
-    result = pd.DataFrame(result, index=table.columns, columns=[user_id]).fillna(0)
-
-    result.to_csv("dataset/data_after_preprocessing/user_based.csv")
-    ## Evaluation function
-    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
-    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
-
-def item_based(table, user_id):
-    # table = table.pivot_table(index='VISIT_ID',columns='TRAVELER_ID',values='RATING').fillna(0).to_csv("dataset/data_after_preprocessing/pivot.csv")
-    ## Rating Matrix 만들기
-    table = table.pivot_table(index='VISIT_ID', columns='TRAVELER_ID', values='RATING').fillna(0)
-
-    knn = NearestNeighbors(metric='cosine', algorithm='brute')
-    knn.fit(table.values)
-    distances, indices = knn.kneighbors(table.values, n_neighbors=21)
-    cosine_similarity_ = np.array(1 - distances)
-
-    # 유사한 방문지 20개 뽑기 ##자기 제외
-    sim_ind = np.array(indices)[:, 1:]
-
-    ## weighted ratings page 49
-    ## cosine_sim * visit rating / sum(cosine_sim)
-    result = table[user_id]
-
-    ## 가보지 않은 visit index 추출
-    index = result[result == 0].index
-
-    res = np.sum(np.array(np.sum(table, axis=1)/np.sum(table != 0, axis=1))[sim_ind]
-                 *cosine_similarity_[:,1:], axis=1) /cosine_similarity_[:,1:].sum(axis=1)
-    res = pd.DataFrame(res, index=result.index, columns=[user_id]).loc[index].fillna(0)
-    result.loc[index] = np.array(res).flatten()
-
-    result.to_csv("dataset/data_after_preprocessing/item_based.csv")
-
-    ## Evaluation function
-    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
-    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
-
-def singular_value_decomposition(table):
-    ## https://lsjsj92.tistory.com/m/569
-    ## https://maxtime1004.tistory.com/m/91
-    table = table.pivot_table(index='VISIT_ID', columns='TRAVELER_ID', values='RATING').fillna(0)
-    SVD = TruncatedSVD(n_components=12)
-    matrix = SVD.fit_transform(table)
-
-    corr = np.corrcoef(matrix)
-    visit_list = table.index
-    ## visit id 값 넣는 건데 이건 나중에 userid 받고
-    ## 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
-    coffey_hands = list(visit_list).index(2208040003)
-    # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
-    print(list(visit_list[(corr[coffey_hands]>=0.9)]))
-
-    # 추후에 좀 많이 다듬어야할 것 같음
-    # return 0
 
 if __name__ == "__main__":
     
@@ -241,13 +174,22 @@ if __name__ == "__main__":
     processed_visit_data = process_table(visit_data, "visit")
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
-
     table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+    ## Train, Test 나누는 것 추가되어야함
+    # row : User, column : item
+    user_visit_rating_matrix = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
-    table = get_rating(table)
-    # user_based_result  = user_based(table, 'a000012')
-    # item_based_result = item_based(table, 'a000012')
-    # singular_value_decomposition(table)
+    ## collaborative filtering
+    user_based_result  = user_based(user_visit_rating_matrix, 'a000012')
+    item_based_result = item_based(user_visit_rating_matrix.T, 'a000012')
+
+    ## Model-based Filterting
+    singular_value_decomposition(user_visit_rating_matrix.T)
+
+    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    factorizer.fit()
+    factorizer.print_results()
+
     # # # save the file
     table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
