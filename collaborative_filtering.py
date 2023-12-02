@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 
 def user_based(table, user_id):
+    # 2307 rows x 2810 columns
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
     knn.fit(table.values)
     distances, indices = knn.kneighbors(table.values, n_neighbors=21)
     cosine_similarity_ = np.array(1 - distances)
-
     sim_user = indices.tolist()[table.index.tolist().index(user_id)][1:]
 
     ## weighted ratings page 25

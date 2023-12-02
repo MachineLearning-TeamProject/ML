@@ -4,17 +4,55 @@ import scipy.linalg
 from sklearn.decomposition import TruncatedSVD
 from scipy.sparse.linalg import svds
 from scipy.linalg import svd
+from numpy import linalg as la
+
 ## 다시해봐야할 듯
+def get_k(sigma,percentage):
+    sigma_sqr=sigma**2
+    sum_sigma_sqr=sum(sigma_sqr)
+    k_sum_sigma=0
+    k=0
+    for i in sigma:
+        k_sum_sigma+=i**2
+        k+=1
+        if k_sum_sigma>=sum_sigma_sqr*percentage:
+            return k
+
+def ecludSim(inA,inB):
+    return 1.0/(1.0+la.norm(inA-inB))
+
 def singular_value_decomposition(table):
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
     # SVD = TruncatedSVD(n_components=100)
     # matrix = SVD.fit_transform(table)
-    print(table.shape)
+    n = table.shape[1]
+    user_rating = table[1]['a000012']
+    print(user_rating)
+    exit()
     u, sigma, vt = svd(table)
     print(u.shape)
     print(sigma.shape)
     print(vt.shape)
+    k = get_k(sigma, 0.9)
+    # Construct the diagonal matrix
+    sigma_k = np.diag(sigma[:k])
+    # Convert the original data to k-dimensional space (lower dimension)
+    formed_items = np.around(np.dot(np.dot(u[:, :k], sigma_k), vt[:k, :]), decimals=3)
+    for j in table.columns:
+        user_rating = table['a000012', j]
+        print(user_rating)
+        # if user_rating == 0 or j == item: continue
+        # # the similarity between item and item j
+        # similarity = simMeas(formed_items[item, :].T, formed_items[j, :].T)
+        # sim_total += similarity
+        # # product of similarity and the rating of user to item j, then sum
+        # rat_sim_total += similarity * user_rating
+        # if sim_total == 0:
+        #     return 0
+        # else:
+        #     return np.round(rat_sim_total / sim_total, decimals=3)
+    exit()
     # corr = np.corrcoef(matrix)
     # visit_list = table.index
     ## visit id 값 넣는 건데 이건 나중에 userid 받고

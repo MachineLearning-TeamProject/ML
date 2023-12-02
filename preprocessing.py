@@ -180,19 +180,20 @@ if __name__ == "__main__":
     user_visit_rating_matrix = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
     ## collaborative filtering
-    user_based_result  = user_based(user_visit_rating_matrix, 'a000012')
-    item_based_result = item_based(user_visit_rating_matrix.T, 'a000012')
+    user_based_result  = user_based(user_visit_rating_matrix.copy(), 'a000012')
+    item_based_result = item_based(user_visit_rating_matrix.T.copy(), 'a000012')
 
     ## Model-based Filterting
-    singular_value_decomposition(user_visit_rating_matrix.T)
-
-    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
-    factorizer.fit()
-    factorizer.print_results()
+    # singular_value_decomposition(user_visit_rating_matrix)
+    #
+    # factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    # factorizer.fit()
+    # factorizer.print_results()
 
     # # # save the file
     table.to_csv("dataset/data_after_preprocessing/dataset.csv")
     processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
     processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
     processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
+    user_visit_rating_matrix.to_csv("dataset/data_after_preprocessing/rating_matrix.csv")
 
