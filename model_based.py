@@ -55,10 +55,10 @@ def singular_value_decomposition(table):
     visit_list = table.index
     # visit id 값 넣는 건데 이건 나중에 userid 받고
     # 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
-    coffey_hands = list(visit_list).index(5)
-    # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
-    print(list(visit_list[(corr[coffey_hands]>=0.9)]))
-    exit()
+    # coffey_hands = list(visit_list).index(5)
+    # # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
+    # print(list(visit_list[(corr[coffey_hands]>=0.9)]))
+    # exit()
     # 추후에 좀 많이 다듬어야할 것 같음
     # return 0
 
