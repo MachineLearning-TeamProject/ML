@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import warnings
 
+from sklearn.model_selection import train_test_split
 
 from collaborative_filtering import user_based, item_based
 
@@ -175,18 +176,23 @@ if __name__ == "__main__":
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
     table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-    ## Train, Test 나누는 것 추가되어야함
+
     # row : User, column : item
     user_visit_rating_matrix = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
+    # divide train/test set
+    train_data, test_data = train_test_split(user_visit_rating_matrix, test_size=0.2)
+    test_set_mask = test_data.copy()
+    test_set_mask[test_set_mask != 0] = 1
+
     ## collaborative filtering
-    user_based_result  = user_based(user_visit_rating_matrix.copy(), 'a000012')
-    item_based_result = item_based(user_visit_rating_matrix.T.copy(), 'a000012')
+    user_based_result  = user_based(train_data.copy(), 'a000012')
+    item_based_result = item_based(train_data.T.copy(), 'a000012')
 
     ## Model-based Filterting
-    singular_value_decomposition(user_visit_rating_matrix.T.copy())
+    singular_value_decomposition(train_data.T.copy())
     #
-    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    factorizer = MatrixFactorization(np.array(train_data), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
     factorizer.fit()
     factorizer.print_results()
 
