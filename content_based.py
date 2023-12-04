@@ -15,10 +15,17 @@ if __name__ == "__main__":
 
     missions = {code: name for code, name in zip(mission_code, mission_name)}
 
+    # 방문지 유형 VISIT_AREA_TYPE_CD
+    visit_area_type_name = ["자연관광지", "역사/유적/종교 시설 (문화재, 박물관, 촬영지, 절 등)", "문화시설(공연장, 영화관, 전시관 등)", "상업지구(거리, 시장, 쇼핑시설)", "레저/스포츠 관련 시설(스키, 카트, 수상레저)", "테마시설(놀이공원, 워터파크)", "산책로, 둘레길 등", "지역축제, 행사", "체험 활동 관광지"]
+    
+    visit_area_type_code = [1, 2, 3, 4, 5, 6, 7, 8, 13]
+
+    visit_area_types = {code: name for code, name in zip(visit_area_type_code, visit_area_type_name)}
+    
     # RATING이 13 이상인 행을 선택
     selected_rows = travel_table[travel_table['RATING'] >= 13]
 
-    # 선택된 행들을 순회하면서 missions 열을 활성화
+    # 선택된 행들을 순회하면서 missions 열 및 visit area type 열을 활성화
     for index, row in selected_rows.iterrows():
         purpose_list = list(map(int, row['TRAVEL_PURPOSE'].strip(';').split(';')))
         for purpose in purpose_list:
@@ -26,6 +33,10 @@ if __name__ == "__main__":
                 continue
             mission_column = missions[purpose]
             travel_table.loc[index, mission_column] = 1
+        
+        visit_area_type = row['VISIT_AREA_TYPE_CD']
+        visit_area_type_column = visit_area_types[visit_area_type]
+        travel_table.loc[index, visit_area_type_column] = 1
 
     # NaN 값을 0으로 채움
     travel_table = travel_table.fillna(0)
@@ -89,7 +100,9 @@ if __name__ == "__main__":
     travel_table_selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
      '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
      '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
-     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)']
+     '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)',
+     "자연관광지", "역사/유적/종교 시설 (문화재, 박물관, 촬영지, 절 등)", "문화시설(공연장, 영화관, 전시관 등)", "상업지구(거리, 시장, 쇼핑시설)", "레저/스포츠 관련 시설(스키, 카트, 수상레저)",
+       "테마시설(놀이공원, 워터파크)", "산책로, 둘레길 등", "지역축제, 행사", "체험 활동 관광지"]
     
     travel_table = travel_table[travel_table_selected_feature]
 
@@ -105,7 +118,8 @@ if __name__ == "__main__":
      '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)',
      '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
     '상황에 따른 여행', '새로운 지역', '알려지지 않은 방문지', '익숙한 지역',
-    '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식']
+    '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식',
+    "자연관광지", "역사/유적/종교 시설 (문화재, 박물관, 촬영지, 절 등)", "문화시설(공연장, 영화관, 전시관 등)", "상업지구(거리, 시장, 쇼핑시설)", "레저/스포츠 관련 시설(스키, 카트, 수상레저)", "테마시설(놀이공원, 워터파크)", "산책로, 둘레길 등", "지역축제, 행사", "체험 활동 관광지"]
     
     merged_table = merged_table[merged_table_selected_feature]
 
@@ -113,7 +127,7 @@ if __name__ == "__main__":
     travel_table = travel_table.groupby('VISIT_ID').agg('mean')
     user_table = user_table.groupby('VISIT_ID').agg('mean')
     merged_table = merged_table.groupby('VISIT_ID').agg('mean')
-
+    
 
     # 결과를 CSV 파일로 저장
     travel_table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
