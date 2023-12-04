@@ -191,11 +191,13 @@ if __name__ == "__main__":
     # item_based_result = item_based(train_data.T.copy(), 'a000012')
     user_based_result  = user_based(user_visit_rating_matrix.copy(), 'a000012')
     item_based_result = item_based(user_visit_rating_matrix.T.copy(), 'a000012')
-    exit()
+
     ## Model-based Filterting
-    singular_value_decomposition(train_data.T.copy())
+    # singular_value_decomposition(train_data.T.copy())
+    # singular_value_decomposition(user_visit_rating_matrix.copy())
     #
-    factorizer = MatrixFactorization(np.array(train_data), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    # factorizer = MatrixFactorization(np.array(train_data), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix.copy()), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
     factorizer.fit()
     factorizer.print_results()
 
