@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import svd
 
-def singular_value_decomposition(table, n = 1000):
+def singular_value_decomposition(table, user_id, n = 1000):
     # hyperparameter n_components
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
@@ -10,8 +10,10 @@ def singular_value_decomposition(table, n = 1000):
     U, Sigma, Vt = svd(table, full_matrices=True)
     Sigma_mat = np.diag(Sigma)
     result = np.round(np.dot(U[:, :n], np.dot(Sigma_mat[:n,:n], Vt[:n, :])), 1)
+    result = pd.DataFrame(result, index=table.index, columns=table.columns).T[user_id]
     pd.DataFrame(result).to_csv("dataset/data_after_preprocessing/svd.csv")
 
+    return result
 ## https://yamalab.tistory.com/92
 class MatrixFactorization():
     def __init__(self, R, k, learning_rate, reg_param, epochs, verbose=False):

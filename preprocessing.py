@@ -189,11 +189,11 @@ if __name__ == "__main__":
 
     ## collaborative filtering
     # user_based_result = user_based(table.copy(), np.array(test_data.index))
-    item_based_result = item_based(table.T.copy(), np.array(test_data.index))
-    exit()
+    # item_based_result = item_based(table.T.copy(), np.array(test_data.index))
+
     ## Model-based Filterting
     # singular_value_decomposition(train_data.T.copy())
-    singular_value_decomposition(user_visit_rating_matrix.copy())
+    svd_result = singular_value_decomposition(table.copy(), test_data.index, n=1000)
     #
     # factorizer = MatrixFactorization(np.array(train_data), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
     factorizer = MatrixFactorization(np.array(user_visit_rating_matrix.copy()), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
