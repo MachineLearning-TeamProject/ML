@@ -1,78 +1,16 @@
 import numpy as np
 import pandas as pd
-import scipy.linalg
-from sklearn.decomposition import TruncatedSVD
-from scipy.sparse.linalg import svds
 from scipy.linalg import svd
-from numpy import linalg as la
 
-## 확인필요
-# def get_k(sigma,percentage):
-#     sigma_sqr=sigma**2
-#     sum_sigma_sqr=sum(sigma_sqr)
-#     k_sum_sigma=0
-#     k=0
-#     for i in sigma:
-#         k_sum_sigma+=i**2
-#         k+=1
-#         if k_sum_sigma>=sum_sigma_sqr*percentage:
-#             return k
-#
-# def ecludSim(inA,inB):
-#     return 1.0/(1.0+la.norm(inA-inB))
-
-def singular_value_decomposition(table):
+def singular_value_decomposition(table, n = 1000):
     # hyperparameter n_components
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
-    # SVD = TruncatedSVD(n_components=100)
-    # matrix = SVD.fit_transform(table)
-    # print(matrix)
-    U, Sigma, Vt = svd(table)
-
-    # U 행렬의 경우는 Sigma와 내적을 수행하므로 Sigma의 앞 2행에 대응되는 앞 2열만 추출
-    U_ = U[:, :]
-    print(Sigma)
-    Sigma_ = np.diag(Sigma[:2])
-    # V 전치 행렬의 경우는 앞 2행만 추출
-    Vt_ = Vt[:2]
-    print(U_.shape, Sigma_.shape, Vt_.shape)
-    # U, Sigma, Vt의 내적을 수행하며, 다시 원본 행렬 복원
-    print('U_ matrix:\n', np.round(U_, 3))
-    print(Sigma_)
-    print('V_ transpose matrix:\n', np.round(Vt_, 3))
-    a_ = np.dot(np.dot(U_, Sigma_), Vt_)
-    print('\n', np.round(a_, 3))
-
-    print()
-    exit()
-    # k = get_k(sigma, 0.9)
-    # # Construct the diagonal matrix
-    # sigma_k = np.diag(sigma[:k])
-    # # Convert the original data to k-dimensional space (lower dimension)
-    # formed_items = np.around(np.dot(np.dot(u[:, :k], sigma_k), vt[:k, :]), decimals=3)
-    # 방문지
-
-    # for j in table.columns:
-    #     user_rating = table[j]['a000012']
-    #     if user_rating == 0 or j == item: continue
-    #     # the similarity between item and item j
-    #     similarity = simMeas(formed_items[item, :].T, formed_items[j, :].T)
-    #     sim_total += similarity
-    #     # product of similarity and the rating of user to item j, then sum
-    #     rat_sim_total += similarity * user_rating
-    #     if sim_total == 0:
-    #         return 0
-    #     else:
-    #         return np.round(rat_sim_total / sim_total, decimals=3)
-    # visit id 값 넣는 건데 이건 나중에 userid 받고
-    # 거기서 유저가 방문한 곳 중에 만족도가 높은 곳만 추출해서 넣으면 됄 듯
-    # coffey_hands = list(visit_list).index(5)
-    # # visit 장소에 대해 상관계수가 0.9보다 높은 지역들만 출력
-    # print(list(visit_list[(corr[coffey_hands]>=0.9)]))
-    # exit()
-    # 추후에 좀 많이 다듬어야할 것 같음
-    # return 0
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.svd.html
+    U, Sigma, Vt = svd(table, full_matrices=True)
+    Sigma_mat = np.diag(Sigma)
+    result = np.round(np.dot(U[:, :n], np.dot(Sigma_mat[:n,:n], Vt[:n, :])), 1)
+    pd.DataFrame(result).to_csv("dataset/data_after_preprocessing/svd.csv")
 
 ## https://yamalab.tistory.com/92
 class MatrixFactorization():
@@ -170,6 +108,7 @@ class MatrixFactorization():
         temp_user = self._learning_rate * (error - self._reg_param * self._bias_user[i])
         temp_item = self._learning_rate * (error - self._reg_param * self._bias_item[j])
         dp, dq = self.gradient(error, i, j)
+
         for num, idx in enumerate(zip(i, j)):
             self._bias_user[idx[0]] += temp_user[num]
             self._bias_item[idx[1]] += temp_item[num]
@@ -177,8 +116,6 @@ class MatrixFactorization():
             # update latent feature
             self.user_latent[idx[0], :] += self._learning_rate * dp[num]
             self.item_latent[idx[1], :] += self._learning_rate * dq[num]
-
-
 
     def get_prediction(self, i, j):
         """
