@@ -182,18 +182,15 @@ if __name__ == "__main__":
 
     # divide train/test set
     train_data, test_data = train_test_split(user_visit_rating_matrix, test_size=0.2)
-    # print(train_data)
-    # print(test_data)
-    test_set_mask = test_data.copy()
-    test_set_mask[test_set_mask != 0] = 1
-
+    test_set_mask = (test_data >= 10) & (test_data < 13)
+    test_data[(test_set_mask >= 10) & (test_set_mask < 13)] = 0
+    table = pd.concat([train_data, test_data])
+    split_value = table.shape[0]-test_data.shape[0]
 
     ## collaborative filtering
-    # user_based_result  = user_based(train_data.copy(), 'a000012')
-    # item_based_result = item_based(train_data.T.copy(), 'a000012')
-    user_based_result = user_based(user_visit_rating_matrix.copy(), 'a000012')
-    item_based_result = item_based(user_visit_rating_matrix.T.copy(), 'a000012')
-
+    # user_based_result = user_based(table.copy(), np.array(test_data.index))
+    item_based_result = item_based(table.T.copy(), np.array(test_data.index))
+    exit()
     ## Model-based Filterting
     # singular_value_decomposition(train_data.T.copy())
     singular_value_decomposition(user_visit_rating_matrix.copy())
