@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 from scipy.linalg import svd
+import time
 
 def singular_value_decomposition(table, user_id, n = 1000):
+    print("Start SVD")
+    start_time = time.time()
     # hyperparameter n_components
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
@@ -11,8 +14,8 @@ def singular_value_decomposition(table, user_id, n = 1000):
     Sigma_mat = np.diag(Sigma)
     result = np.round(np.dot(U[:, :n], np.dot(Sigma_mat[:n,:n], Vt[:n, :])), 1)
     result = pd.DataFrame(result, index=table.index, columns=table.columns).T[user_id]
-    pd.DataFrame(result).to_csv("dataset/data_after_preprocessing/svd.csv")
-
+    print("End SVD ", time.time() - start_time, " sec")
+    print()
     return result
 ## https://yamalab.tistory.com/92
 class MatrixFactorization():
@@ -25,7 +28,9 @@ class MatrixFactorization():
         :param epochs: training epochs
         :param verbose: print status
         """
-        self._R = R
+        self._R = np.array(R)
+        self._columns = R.columns
+        self._index = R.index
         self._num_users, self._num_items = R.shape
         self._k = k
         self._learning_rate = learning_rate
@@ -33,8 +38,9 @@ class MatrixFactorization():
         self._epochs = epochs
         self._verbose = verbose
 
-
     def fit(self):
+        print("Start Matrix Factorization")
+        start_time = time.time()
         """
         training Matrix Factorization : Update matrix latent weight and bias
 
@@ -44,7 +50,6 @@ class MatrixFactorization():
 
         :return: training_process
         """
-
         # init latent features
         self.user_latent = np.random.normal(size=(self._num_users, self._k)) #(2307, 3)
         self.item_latent = np.random.normal(size=(self._num_items, self._k)) #(2810, 3)
@@ -64,7 +69,8 @@ class MatrixFactorization():
             # print status
             if self._verbose == True and ((epoch + 1) % 10 == 0):
                 print("Iteration: %d ; cost = %.4f" % (epoch + 1, cost))
-
+        print("End Matrix Factorization ", round(time.time() - start_time, 3), " sec")
+        print()
     def cost(self):
         """
         compute root mean square error
@@ -75,7 +81,6 @@ class MatrixFactorization():
         # 참고: http://codepractice.tistory.com/90
         xi, yi = self._R.nonzero()
         predicted = self.get_complete_matrix()
-        cost = 0
         cost = np.sum(pow(self._R[xi, yi] - predicted[xi, yi], 2))
         return np.sqrt(cost) / len(xi)
 
@@ -141,6 +146,13 @@ class MatrixFactorization():
         :return: complete matrix R^
         """
         return self._bias + self._bias_user[:, np.newaxis] + self._bias_item[np.newaxis:, ] + self.user_latent.dot(self.item_latent.T)
+
+    def test(self, user_id):
+        predicted = self.get_complete_matrix()
+        # predicted = self.min_max_scaler.fit_transform(predicted)
+        predicted = round(predicted, 2)
+        result = pd.DataFrame(predicted, index=self._index, columns=self._columns).T[user_id]
+        return result
 
 
     def print_results(self):

@@ -1,10 +1,12 @@
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
+import time
 from sklearn.metrics.pairwise import cosine_similarity
 
 def user_based(table, user_ids):
     print("Start User-Based Method")
+    start_time = time.time()
     # 2307 rows x 2810 columns
     # Initialize a Nearest Neighbors model using cosine similarity for user-based collaborative filtering.
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
@@ -13,11 +15,12 @@ def user_based(table, user_ids):
     knn.fit(table.values)
 
     # Find the 21 nearest neighbors (including the user themselves) for each user in the dataset.
-    distances, indices = knn.kneighbors(table.values, n_neighbors=201)
+    distances, indices = knn.kneighbors(table.values, n_neighbors=101)
     # Convert distance metrics to cosine similarity scores.
     cosine_similarity_ = np.array(1 - distances)
 
     results = pd.DataFrame()
+
     for user_id in user_ids :
         # Get the indices of 20 nearest users (excluding the user themselves) for the specified user_id.
         sim_user = indices.tolist()[table.index.tolist().index(user_id)][1:]
@@ -42,9 +45,8 @@ def user_based(table, user_ids):
 
         results = pd.concat([results, result], axis=1)
 
-    # Save the resulting DataFrame to a CSV file for later use or analysis.
-    results.to_csv("dataset/data_after_preprocessing/user_based.csv")
-
+    print("End User-Based Method ", round(time.time() - start_time, 2), "sec")
+    print()
     ## Evaluation function
     ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
     ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
@@ -54,6 +56,8 @@ def user_based(table, user_ids):
 
 def item_based(table, user_ids):
     print("Start Item-Based Method")
+    start_time = time.time()
+
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
     knn.fit(table.values)
     distances, indices = knn.kneighbors(table.values, n_neighbors=21)
@@ -78,8 +82,8 @@ def item_based(table, user_ids):
 
         results = pd.concat([results, result], axis=1)
 
-    results.to_csv("dataset/data_after_preprocessing/item_based.csv")
-
+    print("End Item-Based Method ", round(time.time() - start_time, 2), "sec")
+    print()
     ## Evaluation function
     ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
     ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"

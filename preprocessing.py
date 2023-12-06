@@ -1,12 +1,8 @@
+import random
+
 import pandas as pd
 import numpy as np
 import warnings
-
-from sklearn.model_selection import train_test_split
-
-from memory_based import user_based, item_based
-
-from model_based import MatrixFactorization, singular_value_decomposition
 
 warnings.filterwarnings(action = 'ignore')
 # -----------------
@@ -165,45 +161,5 @@ def merge_table(visit, travel, user):
 
 
 if __name__ == "__main__":
-    
-    # open the file
-    visit_data = pd.read_csv("dataset/수도권/tn_visit_area_info_방문지정보_A.csv")
-    travel_data = pd.read_csv("dataset/수도권/tn_travel_여행_A.csv")
-    user_data = pd.read_csv("dataset/수도권/tn_traveller_master_여행객 Master_A.csv")
-
-    # preprocessing
-    processed_visit_data = process_table(visit_data, "visit")
-    processed_travel_data = process_table(travel_data, "travel")
-    processed_user_data = process_table(user_data, "user")
-    table = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
-    # row : User, column : item
-    user_visit_rating_matrix = table.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
-    # divide train/test set
-    train_data, test_data = train_test_split(user_visit_rating_matrix, test_size=0.2)
-    test_set_mask = (test_data >= 10) & (test_data < 13)
-    test_data[(test_set_mask >= 10) & (test_set_mask < 13)] = 0
-    table = pd.concat([train_data, test_data])
-    split_value = table.shape[0]-test_data.shape[0]
-
-    ## collaborative filtering
-    # user_based_result = user_based(table.copy(), np.array(test_data.index))
-    # item_based_result = item_based(table.T.copy(), np.array(test_data.index))
-
-    ## Model-based Filterting
-    # singular_value_decomposition(train_data.T.copy())
-    svd_result = singular_value_decomposition(table.copy(), test_data.index, n=1000)
-    #
-    # factorizer = MatrixFactorization(np.array(train_data), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
-    factorizer = MatrixFactorization(np.array(user_visit_rating_matrix.copy()), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
-    factorizer.fit()
-    factorizer.print_results()
-
-    # # # save the file
-    table.to_csv("dataset/data_after_preprocessing/dataset.csv")
-    processed_visit_data.to_csv("dataset/data_after_preprocessing/수도권_visit.csv")
-    processed_travel_data.to_csv("dataset/data_after_preprocessing/수도권_travel.csv")
-    processed_user_data.to_csv("dataset/data_after_preprocessing/수도권_user.csv")
-    user_visit_rating_matrix.to_csv("dataset/data_after_preprocessing/rating_matrix.csv")
+    print()
 
