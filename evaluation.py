@@ -19,7 +19,6 @@ def evaluation_func(predict_table, actual_table, threshold):
         if list(np.nonzero(actual_table[column]))[0].shape[0] > 2:
             diff_list = np.isin(np.array(actual_table[column][actual_table[column] > 8.25].index),
                                 np.array(predict_table[column][predict_table[column] > threshold].index))
-
             count_all += diff_list.shape[0]
             correct += np.count_nonzero(diff_list)
 
