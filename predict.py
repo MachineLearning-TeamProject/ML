@@ -11,6 +11,42 @@ from memory_based import user_based, item_based
 from model_based import MatrixFactorization, singular_value_decomposition
 from evaluation import recommend, evaluation_func
 
+def data_preprocessing(area_code, user_visit):
+    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
+    def read_data(key):
+        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보_A.csv"))
+        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행_A.csv"))
+        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master_A.csv"))
+
+        return visit_data, travel_data, user_data
+
+    def add_user(dic, user_visit_rating_matrix, dataset):
+        user_id = 'z000001'
+        user_visit_rating_matrix = user_visit_rating_matrix.T
+        user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
+        for visit_nm in dic.keys():
+            row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
+            user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
+        return user_visit_rating_matrix.T, [user_id]
+
+    # open the file
+    visit_data, travel_data, user_data = read_data(area_code)
+
+    # preprocessing
+    processed_visit_data = process_table(visit_data, "visit")
+    processed_travel_data = process_table(travel_data, "travel")
+    processed_user_data = process_table(user_data, "user")
+    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+
+    # row : User, column : item
+    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
+
+    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
+    rating_matrix = user_visit_rating_matrix
+    rating_matrix_index = user_id
+
+    return rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset
+
 
 def recommend_content(region, visit_id):
 
@@ -98,125 +134,28 @@ def recommend_content(region, visit_id):
     return recommendations
 
 def recommend_user(area_code, user_visit):
-    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
-    def read_data(key):
-        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보_A.csv"))
-        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행_A.csv"))
-        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master_A.csv"))
-
-        return visit_data, travel_data, user_data
-
-    def add_user(dic, user_visit_rating_matrix, dataset):
-        user_id = 'z000001'
-        user_visit_rating_matrix = user_visit_rating_matrix.T
-        user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
-        for visit_nm in dic.keys():
-            row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
-            user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
-        return user_visit_rating_matrix.T, [user_id]
-
-    # open the file
-    visit_data, travel_data, user_data = read_data(area_code)
-
-    # preprocessing
-    processed_visit_data = process_table(visit_data, "visit")
-    processed_travel_data = process_table(travel_data, "travel")
-    processed_user_data = process_table(user_data, "user")
-    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
-    # row : User, column : item
-    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
-    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
-    rating_matrix = user_visit_rating_matrix
-    rating_matrix_index = user_id
+    rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     # collaborative filtering
     user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
-
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25)
-    
-    
+
     return recommend_list
 
 def recommend_item(area_code, user_visit):
-    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
-    def read_data(key):
-        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보_A.csv"))
-        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행_A.csv"))
-        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master_A.csv"))
-
-        return visit_data, travel_data, user_data
-
-    def add_user(dic, user_visit_rating_matrix, dataset):
-        user_id = 'z000001'
-        user_visit_rating_matrix = user_visit_rating_matrix.T
-        user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
-        for visit_nm in dic.keys():
-            row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
-            user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
-        return user_visit_rating_matrix.T, [user_id]
-
-    # open the file
-    visit_data, travel_data, user_data = read_data(area_code)
-
-    # preprocessing
-    processed_visit_data = process_table(visit_data, "visit")
-    processed_travel_data = process_table(travel_data, "travel")
-    processed_user_data = process_table(user_data, "user")
-    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
-    # row : User, column : item
-    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
-    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
-    rating_matrix = user_visit_rating_matrix
-    rating_matrix_index = user_id
+    rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     # collaborative filtering
     item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
-
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25)
-    
     
     return recommend_list
 
 
 def recommend_svd(area_code, user_visit):
-    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
-    def read_data(key):
-        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보_A.csv"))
-        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행_A.csv"))
-        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master_A.csv"))
+    rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
-        return visit_data, travel_data, user_data
-
-    def add_user(dic, user_visit_rating_matrix, dataset):
-        user_id = 'z000001'
-        user_visit_rating_matrix = user_visit_rating_matrix.T
-        user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
-        for visit_nm in dic.keys():
-            row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
-            user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
-        return user_visit_rating_matrix.T, [user_id]
-
-    # open the file
-    visit_data, travel_data, user_data = read_data(area_code)
-
-    # preprocessing
-    processed_visit_data = process_table(visit_data, "visit")
-    processed_travel_data = process_table(travel_data, "travel")
-    processed_user_data = process_table(user_data, "user")
-    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
-    # row : User, column : item
-    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
-    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
-    rating_matrix = user_visit_rating_matrix
-    rating_matrix_index = user_id
-
-    # collaborative filtering
+    # model_based filtering
     svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
 
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2)
@@ -224,45 +163,12 @@ def recommend_svd(area_code, user_visit):
     return recommend_list
 
 def recommend_mf(area_code, user_visit):
-    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
-    def read_data(key):
-        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보_A.csv"))
-        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행_A.csv"))
-        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master_A.csv"))
+    rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
-        return visit_data, travel_data, user_data
-
-    def add_user(dic, user_visit_rating_matrix, dataset):
-        user_id = 'z000001'
-        user_visit_rating_matrix = user_visit_rating_matrix.T
-        user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
-        for visit_nm in dic.keys():
-            row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
-            user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
-        return user_visit_rating_matrix.T, [user_id]
-
-    # open the file
-    visit_data, travel_data, user_data = read_data(area_code)
-
-    # preprocessing
-    processed_visit_data = process_table(visit_data, "visit")
-    processed_travel_data = process_table(travel_data, "travel")
-    processed_user_data = process_table(user_data, "user")
-    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
-    # row : User, column : item
-    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
-    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
-    rating_matrix = user_visit_rating_matrix
-    rating_matrix_index = user_id
-
-    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,
-                                     verbose=False)
+    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50, verbose=False)
     factorizer.load_array()
     factorizer.fit()
     mf_result = factorizer.test(rating_matrix_index)
-
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25)
     
     return recommend_list

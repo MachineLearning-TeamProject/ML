@@ -31,7 +31,7 @@ def model_eval(user_visit_rating_matrix):
 
 def save_csv(area_code, **kwargs):
     for key, value in kwargs.items():
-        value.to_csv(os.path.join("dataset","data_after_preprocessing", area[area_code], key)+".csv")
+        value.to_csv(os.path.join("dataset", "data_after_preprocessing", area[area_code], key) + ".csv")
 
 def add_user(dic, user_visit_rating_matrix, dataset):
     # dic = {'경복궁': (4, 5, 5), '108하늘계단': (1, 4, 5)}
@@ -39,9 +39,10 @@ def add_user(dic, user_visit_rating_matrix, dataset):
     user_visit_rating_matrix = user_visit_rating_matrix.T
     user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
     for visit_nm in dic.keys():
-        row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
-        user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
+        row_id = np.array(dataset[dataset['VISIT_AREA_NM'] == visit_nm]['VISIT_ID'])[0]
+        user_visit_rating_matrix.loc[row_id, user_id] = get_rating_(list(dic[visit_nm]))
     return user_visit_rating_matrix.T, [user_id]
+
 
 def user_recommend(area_code, user_visit):
     # open the file
@@ -67,7 +68,7 @@ def user_recommend(area_code, user_visit):
 
     # Model-based Filterting
     svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
-    
+
     factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,
                                      verbose=False)
     factorizer.load_array()
@@ -75,14 +76,17 @@ def user_recommend(area_code, user_visit):
     mf_result = factorizer.test(rating_matrix_index)
 
     recommend_list = []
-    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25))
-    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25))
-    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2))
-    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25))
-    
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index,8.25))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index,8.25))
+    recommend_list.append(
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2))
+    recommend_list.append(
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25))
+
     return recommend_list
 
-def evaluate_model(area_code = 1):
+
+def evaluate_model(area_code=1):
     """
     Evaluate the model for a given area code.
 
@@ -107,7 +111,6 @@ def evaluate_model(area_code = 1):
     rating_matrix = model_eval(user_visit_rating_matrix)
     rating_matrix_index = rating_matrix.index
 
-
     # collaborative filtering
     user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
     evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
@@ -116,33 +119,31 @@ def evaluate_model(area_code = 1):
     evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
     # Model-based Filterting
-    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index,n=1000)
+    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
     evaluation_func(svd_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 0.2)
 
-    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300,
+                                     verbose=True)
     factorizer.fit()
     mf_result = factorizer.test(rating_matrix_index)
     evaluation_func(mf_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
-
     # # save the file
     save_csv(area_code,
-             dataset = dataset,
-             processed_user_data = processed_user_data,
-             processed_visit_data = processed_visit_data,
-             processed_travel_data = processed_travel_data,
-             rating_matrix = rating_matrix,
-             user_based = user_based_result,
-             item_based = item_based_result,
-             svd = svd_result,
-             MF = mf_result)
+             dataset=dataset,
+             processed_user_data=processed_user_data,
+             processed_visit_data=processed_visit_data,
+             processed_travel_data=processed_travel_data,
+             rating_matrix=rating_matrix,
+             user_based=user_based_result,
+             item_based=item_based_result,
+             svd=svd_result,
+             MF=mf_result)
+
 
 if __name__ == "__main__":
     # user_recommend(1, {'경복궁': (4, 5, 5), '108하늘계단': (5, 4, 5)})
     evaluate_model(1)
 
-
     # user input 받기
     # 재방문의향, 추천의향, 만족도 순서
-
-
