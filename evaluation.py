@@ -26,8 +26,7 @@ def evaluation_func(predict_table, actual_table, threshold):
     print()
 
 def recommend(dataset, actual_table, predict_table, user_id, threshold):
-    # print(np.array(predict_table) > 8.25)
-    predict_table = predict_table.drop(np.nonzero(actual_table * np.array(actual_table > 8.25))[0])
+    predict_table = predict_table.drop(actual_table.index[np.nonzero(actual_table * np.array(actual_table > 8.25))[0]])
     predict_table = predict_table.nlargest(10, user_id)
     recommend_index = list(predict_table[np.array(predict_table) > threshold].index)
     result = []
