@@ -61,28 +61,37 @@ def user_recommend(area_code, user_visit):
     rating_matrix_index = user_id
 
     # collaborative filtering
-    # user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
+    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
 
     item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
 
     # Model-based Filterting
-    # svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
-    #
-    # factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,
-    #                                  verbose=False)
-    # factorizer.load_array()
-    # factorizer.fit()
-    # mf_result = factorizer.test(rating_matrix_index)
+    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
+    
+    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,
+                                     verbose=False)
+    factorizer.load_array()
+    factorizer.fit()
+    mf_result = factorizer.test(rating_matrix_index)
 
     recommend_list = []
-    # recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25))
     recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25))
-    # recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2))
-    # recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25))
-    print(recommend_list)
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25))
+    
     return recommend_list
 
 def evaluate_model(area_code = 1):
+    """
+    Evaluate the model for a given area code.
+
+    Parameters:
+    - area_code (int): The area code to evaluate the model for. Default is 1.
+
+    Returns:
+    None
+    """
     # open the file
     visit_data, travel_data, user_data = read_data(area_code)
 

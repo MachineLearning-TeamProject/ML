@@ -7,6 +7,7 @@ import csv
 from predict_content_based import recommend_content 
 from main import user_recommend
 
+
 # Session State also supports attribute based syntax
 # ----------------------------------------
 # stage 변수 초기화
@@ -56,6 +57,19 @@ def request_endpoint(url):
     return None
 
 def setting_region(region):
+    """
+    Sets the visit_area_dict based on the specified region.
+
+    Parameters:
+    region (str): The region for which to set the visit_area_dict.
+
+    Returns:
+    list: A list of keys from the visit_area_dict.
+
+    Raises:
+    FileNotFoundError: If the specified region file is not found.
+    """
+
     if region == '수도권':
         # visit_area_dict.csv 파일을 불러와서, key와 value 딕셔너리 생성
 
@@ -82,8 +96,6 @@ def setting_region(region):
     st.session_state['visit_area_dict'] = visit_area_dict
         # value값들만 리스트로 저장
     return list(visit_area_dict.keys())
-
-
 
 
 merged_table = pd.read_csv("C:\ML\dataset\data_after_preprocessing\content_based_combined.csv", encoding="utf-8")
@@ -170,23 +182,28 @@ if st.session_state['rating_stage'] == True:
 # Stage 4: 비슷한 여행지 추천
 # -------------------------------
 if st.session_state['recommendation_stage'] == True:
-    tmp_dict = {}
-    # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
-    for idx, voyage in enumerate(st.session_state['selected_values']):
-        tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
-    with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
-        recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
+    
+    # 비슷한 여행지 추천 받는 기능을 server.py에 fastapi 형태로 구현해줘
+    # 그리고 그걸 여기서 불러와서 쓰면 될 듯
+    # 그러면 여기서는 그냥 버튼 누르면 추천 받는 거로 해도 될 듯
 
     if st.button("비슷한 여행지 추천 받기"):
+        tmp_dict = {}
+        # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
+        for idx, voyage in enumerate(st.session_state['selected_values']):
+            tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
+        # with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
+            # recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
+
         st.balloons()
         # User based filtering method
         st.markdown("# User-based filtering method")
-        st.text(recommend_list[0])
+        # st.text(recommend_list[0])
         st.divider()
 
         # Memory based filtering method
         st.markdown("# Memory-based filtering method")
-        st.text(recommend_list[1])
+        # st.text(recommend_list[1])
         st.divider()
 
         # content based filtering method
@@ -197,21 +214,21 @@ if st.session_state['recommendation_stage'] == True:
             visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
             st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
             st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
-
-            result_df = recommend_content(merged_table, visited_area_id, st.session_state['visit_area_dict'])
+            # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
             
-            for idx, row in result_df.iterrows():    
-                st.text(row['방문지명'])
+            url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
+            response = requests.get(url)
+            st.write(response.json())
 
         st.divider()
 
         # model based filtering method
         st.markdown("# SVD method")
-        st.text(recommend_list[2])
+        # st.text(recommend_list[2])
         st.divider()
 
         st.markdown("# Matrix Factorization method")
-        st.text(recommend_list[3])
+        # st.text(recommend_list[3])
         st.divider()
     
         
