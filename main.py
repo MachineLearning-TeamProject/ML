@@ -1,6 +1,8 @@
+import random
+
 import pandas as pd
 import os
-from preprocessing import process_table, merge_table
+from preprocessing import process_table, merge_table, get_rating_
 import numpy as np
 from memory_based import user_based, item_based
 from model_based import MatrixFactorization, singular_value_decomposition
@@ -31,6 +33,16 @@ def save_csv(area_code, **kwargs):
     for key, value in kwargs.items():
         value.to_csv(os.path.join("dataset","data_after_preprocessing", area[area_code], key)+".csv")
 
+def add_user(dic, user_visit_rating_matrix):
+    # dic = {'산정호수폭포': (4, 5, 5)}
+    user_id = 'z000001'
+    user_visit_rating_matrix = user_visit_rating_matrix.T
+    user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
+    for visit_nm in dic.keys():
+        row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
+        user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
+    return user_visit_rating_matrix.T, [user_id]
+
 if __name__ == "__main__":
     area_code = 1
     evaluation = False
@@ -47,12 +59,16 @@ if __name__ == "__main__":
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
+    # user input 받기
+    # 재방문의향, 추천의향, 만족도 순서
+
     if evaluation:
         rating_matrix = model_eval(user_visit_rating_matrix)
         rating_matrix_index = rating_matrix.index
     else:
+        user_visit_rating_matrix, user_id = add_user({'산정호수폭포': (4, 5, 5)}, user_visit_rating_matrix)
         rating_matrix = user_visit_rating_matrix
-        rating_matrix_index = ['a000012']
+        rating_matrix_index = user_id
 
     # collaborative filtering
     user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))

@@ -136,6 +136,9 @@ def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
     table['RATING'] = weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN']
     return table
 
+def get_rating_(value, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
+    return weight_0 * value[0] + weight_1 * value[0] + weight_2 * value[0]
+
 def merge_table(visit, travel, user):
     merge_table = pd.merge(travel,user, how='inner',on='TRAVELER_ID')
     merge_table = pd.merge(visit, merge_table, how='inner',on='TRAVEL_ID')
