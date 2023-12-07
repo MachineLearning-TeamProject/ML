@@ -2,35 +2,33 @@ from sklearn.neighbors import NearestNeighbors
 import pandas as pd
 import numpy as np
 import time
-from sklearn.metrics.pairwise import cosine_similarity
 
 def user_based(table, user_ids):
     print("Start User-Based Method")
     start_time = time.time()
-    # 2307 rows x 2810 columns
+
     # Initialize a Nearest Neighbors model using cosine similarity for user-based collaborative filtering.
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
 
     # Fit the model to the data in 'table', which contains user-item interactions.
     knn.fit(table.values)
 
-    # Find the 21 nearest neighbors (including the user themselves) for each user in the dataset.
+    # Find the 101 nearest neighbors (including the user themselves) for each user in the dataset.
     distances, indices = knn.kneighbors(table.values, n_neighbors=101)
+
     # Convert distance metrics to cosine similarity scores.
     cosine_similarity_ = np.array(1 - distances)
 
     results = pd.DataFrame()
-
     for user_id in user_ids :
-        # Get the indices of 20 nearest users (excluding the user themselves) for the specified user_id.
+        # Get the indices of 100 nearest users (excluding the user themselves) for the specified user_id.
         sim_user = indices.tolist()[table.index.tolist().index(user_id)][1:]
 
         result = table.T[user_id].copy()
-        ## 가보지 않은 visit index 추출
-        index = result[result == 0].index
-        # 2798
 
-        ## weighted ratings page 25
+        # Extract non-rating VISIT ID
+        index = result[result == 0].index
+
         ## cosine_sim * visit rating / sum(cosine_sim)
         # Calculate weighted ratings for recommendations.
         # Multiply the cosine similarity of the nearest users with their ratings and normalize.
@@ -46,10 +44,6 @@ def user_based(table, user_ids):
         results = pd.concat([results, result], axis=1)
 
     print("End User-Based Method ", round(time.time() - start_time, 2), "sec")
-    ## Evaluation function
-    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
-    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
-
     return results
 
 
@@ -57,23 +51,30 @@ def item_based(table, user_ids):
     print("Start Item-Based Method")
     start_time = time.time()
 
+    # Initialize a Nearest Neighbors model using cosine similarity for item-based collaborative filtering.
     knn = NearestNeighbors(metric='cosine', algorithm='brute')
+
+    # Fit the model to the data in 'table', which contains user-item interactions.
     knn.fit(table.values)
+
+    # Find the 21 nearest neighbors (including the visit area themselves) for each visit area in the dataset.
     distances, indices = knn.kneighbors(table.values, n_neighbors=21)
     cosine_similarity_ = np.array(1 - distances)
 
     results = pd.DataFrame()
     for user_id in user_ids:
-        ## weighted ratings page 49
         ## cosine_sim * visit rating / sum(cosine_sim)
         result = table[user_id].copy()
 
         # 유사한 방문지 20개 뽑기 ##자기 제외
         sim_ind = np.array(indices)[:, 1:]
 
-        ## 가보지 않은 visit index 추출
+        # Extract non-rating VISIT ID
         index = result[result == 0].index
 
+        # Calculate weighted ratings for recommendations.
+        # Multiply the cosine similarity of the nearest visit area with their ratings and normalize.
+        # This creates a weighted average based on similarity for each item.
         res = np.sum(np.array(result)[np.array(sim_ind)]*cosine_similarity_[:,1:],axis=1) \
               / cosine_similarity_[:,1:].sum(axis=1)
         res = pd.DataFrame(res, index=result.index, columns=[user_id]).loc[index].fillna(0)
@@ -82,8 +83,4 @@ def item_based(table, user_ids):
         results = pd.concat([results, result], axis=1)
 
     print("End Item-Based Method ", round(time.time() - start_time, 2), "sec")
-    ## Evaluation function
-    ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
-    ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
-
     return results
