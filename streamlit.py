@@ -194,22 +194,31 @@ if st.session_state['recommendation_stage'] == True:
             tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
         # with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
             # recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
-
+        print(tmp_dict)
         st.balloons()
-        # User based filtering method
+        # [1] User based filtering method
         st.markdown("# User-based filtering method")
-        url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{tmp_dict}"
-        response = requests.get(url)
+        url = f"http://localhost:8080/user_based"
+        data = {
+            "region": st.session_state['selected_region'],
+            "user_visit": tmp_dict
+        }
+        response = requests.post(url, json=data) 
         st.write(response.json())
-        # st.text(recommend_list[0])
         st.divider()
 
-        # Memory based filtering method
+        # [2] Memory based filtering method
         st.markdown("# Memory-based filtering method")
-        # st.text(recommend_list[1])
+        url = f"http://localhost:8080/memory_based"
+        data = {
+            "region": st.session_state['selected_region'],
+            "user_visit": tmp_dict
+        }
+        response = requests.post(url, json=data) 
+        st.write(response.json())
         st.divider()
 
-        # content based filtering method
+        # [3] content based filtering method
         st.markdown("# Content-based filtering method")
         # print(st.session_state['visit_area_dict'])
         for visited_area_name in st.session_state['selected_values']:
@@ -225,12 +234,26 @@ if st.session_state['recommendation_stage'] == True:
 
         st.divider()
 
-        # model based filtering method
+        # [4] model based filtering method - SVD
         st.markdown("# SVD method")
-        # st.text(recommend_list[2])
+        url = f"http://localhost:8080/svd_based"
+        data = {
+            "region": st.session_state['selected_region'],
+            "user_visit": tmp_dict
+        }
+        response = requests.post(url, json=data) 
+        st.write(response.json())
         st.divider()
 
+        # [5] model based filtering method - Matrix Factorization
         st.markdown("# Matrix Factorization method")
+        url = f"http://localhost:8080/mf_based"
+        data = {
+            "region": st.session_state['selected_region'],
+            "user_visit": tmp_dict
+        }
+        response = requests.post(url, json=data) 
+        st.write(response.json())
         # st.text(recommend_list[3])
         st.divider()
     

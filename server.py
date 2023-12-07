@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import pandas as pd
 from predict import recommend_content, recommend_user, recommend_item, recommend_svd, recommend_mf
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -17,19 +18,47 @@ async def content_based(region:str, visit_id: int):
     print(visit_id)
     return recommend_content(region, visit_id)
 
-@app.get("/{region}/content_based/{user_visit}")
-async def content_based(region:str, user_visit: dict):
+class History(BaseModel):
+    region: str
+    user_visit: dict
+
+@app.post("/user_based")
+async def user_based(data_request: History):
     area = {"수도권":1, "동부권": 2, "서부권": 3, "제주도 및 도서 지역": 4}
-    area_code = area.get(region)
+    area_code = area.get(data_request.region)
 
-    print(region)
-    print(user_visit)
-    return recommend_user(area_code, user_visit)
+    print(data_request.region)
+    print(data_request.user_visit)
+    return recommend_user(area_code, data_request.user_visit)
     
-    
-    
-    
+@app.post("/item_based")
+async def user_based(data_request: History):
+    area = {"수도권":1, "동부권": 2, "서부권": 3, "제주도 및 도서 지역": 4}
+    area_code = area.get(data_request.region)
 
+    print(data_request.region)
+    print(data_request.user_visit)
+    return recommend_item(area_code, data_request.user_visit)    
+    
+@app.post("/svd_based")
+async def user_based(data_request: History):
+    area = {"수도권":1, "동부권": 2, "서부권": 3, "제주도 및 도서 지역": 4}
+    area_code = area.get(data_request.region)
+
+    print(data_request.region)
+    print(data_request.user_visit)
+    return recommend_svd(area_code, data_request.user_visit)
+    
+@app.post("/mf_based")
+async def user_based(data_request: History):
+    area = {"수도권":1, "동부권": 2, "서부권": 3, "제주도 및 도서 지역": 4}
+    area_code = area.get(data_request.region)
+
+    print(data_request.region)
+    print(data_request.user_visit)
+    return recommend_mf(area_code, data_request.user_visit)
+    
+    
 
 
 if __name__ == '__main__':
