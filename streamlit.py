@@ -5,12 +5,24 @@ import matplotlib.pyplot as plt
 from streamlit_searchbox import st_searchbox
 import csv
 from predict_content_based import recommend_content 
+from main import user_recommend
 
 # Session State also supports attribute based syntax
-
+# ----------------------------------------
+# stage 변수 초기화
 if 'select_region_stage' not in st.session_state:
     st.session_state['select_region_stage'] = True
 
+if 'select_voyage_stage' not in st.session_state:
+    st.session_state['select_voyage_stage'] = False
+
+if 'rating_stage' not in st.session_state:
+    st.session_state['rating_stage'] = False
+
+if 'recommendation_stage' not in st.session_state:
+    st.session_state['recommendation_stage'] = []
+
+# ----------------------------------------
 if 'selected_region' not in st.session_state:
     st.session_state['selected_region'] = ""
 
@@ -20,14 +32,8 @@ if 'visit_area_dict' not in st.session_state:
 if 'visit_area_names' not in st.session_state:
     st.session_state['visit_area_names'] = []
 
-if 'select_voyage_stage' not in st.session_state:
-    st.session_state['select_voyage_stage'] = []
-
 if 'selected_values' not in st.session_state:
     st.session_state['selected_values'] = []
-
-if 'rating_ok' not in st.session_state:
-    st.session_state['rating_ok'] = False
 
 if 'satisfaction_rating' not in st.session_state:
     st.session_state['satisfaction_rating'] = []
@@ -40,9 +46,6 @@ if 'recommend_rating' not in st.session_state:
     
 if 'visited_id' not in st.session_state:
     st.session_state['visited_id'] = []
-
-if 'recommendation_stage' not in st.session_state:
-    st.session_state['recommendation_stage'] = []
 
 @st.cache_data()
 def request_endpoint(url):
@@ -86,34 +89,16 @@ def setting_region(region):
 merged_table = pd.read_csv("C:\ML\dataset\data_after_preprocessing\content_based_combined.csv", encoding="utf-8")
 
 
-# -----------------
-# 페이지 이름
-# -----------------
-page1_name = "Item-based collaborative filtering"
-page2_name = "User-based collaborative filtering"
-page3_name = "Content-based filtering"
 
-# -----------------
-# 슬라이드 바
-# -----------------
-# st.sidebar.subheader("SageMaker Endpoint")
-
-# page = st.sidebar.selectbox("페이지 선택", [page1_name, page2_name, page3_name])
-
-# api_url = st.sidebar.text_input('fast api', value="43.202.112.5:8000")
-
-# user_id = st.sidebar.text_input('user id', value=1)
-
-# threshold = st.sidebar.slider('prediction threshold', 0.0, 1.0, 0.2)
-
-
-
-# -----------------
-# 타이틀
-# -----------------
+# ========================================
+# 페이지 시작
+# ========================================
 
 st.title("Where to go?")
 
+# -------------------------------
+# Stage 1: 여행하고 싶은 지역 선택
+# -------------------------------
 if st.session_state['select_region_stage'] == True:
     region = st.selectbox(
                 '여행하고 싶은 지역을 선택해주세요',
@@ -126,13 +111,15 @@ if st.session_state['select_region_stage'] == True:
         st.session_state['visit_area_names'] = setting_region(region)
         st.experimental_rerun()
 
-# 가본 곳 여러 개 받기
-# pass search function to searchbox
-# visit_area_names에 searchterm이 포함된 단어들이 있으면, 그 단어들의 리스트 반환하는 함수
+
 def search_visit_area(searchterm):
     return [visit_area_name for visit_area_name in st.session_state['visit_area_names'] if searchterm in visit_area_name]
 
+# -------------------------------
+# Stage 2: 가본 곳 선택
+# -------------------------------
 if st.session_state['select_voyage_stage'] == True:
+    st.caption('가본 곳을 선택해주세요.')
     selected_value = st_searchbox(
         search_visit_area,
         key="visit_area_searchbox",
@@ -146,10 +133,13 @@ if st.session_state['select_voyage_stage'] == True:
 
     if st.button('가본 곳 추가 완료'):
         st.session_state['select_voyage_stage'] = False
-        st.session_state['rating_ok'] = True
+        st.session_state['rating_stage'] = True
         st.experimental_rerun()
 
-if st.session_state['rating_ok'] == True:
+# -------------------------------
+# Stage 3: 만족도 평가
+# -------------------------------
+if st.session_state['rating_stage'] == True:
     for idx, voyage in enumerate(st.session_state['selected_values']):
         st.markdown("## " + voyage)
         globals()[f"option1_{idx}"] = st.selectbox(
@@ -169,25 +159,37 @@ if st.session_state['rating_ok'] == True:
         )
         
     if st.button("설문 완료"):
-        st.session_state['rating_ok'] = False
+        st.session_state['rating_stage'] = False
         st.session_state['recommendation_stage'] = True
         st.session_state['satisfaction_rating'] = st.session_state['satisfaction_rating'] + [globals()[f"option1_{idx}"] for idx, voyage in enumerate(st.session_state['selected_values'])]
         st.session_state['revisit_rating'] = st.session_state['revisit_rating'] + [globals()[f"option2_{idx}"] for idx, voyage in enumerate(st.session_state['selected_values'])]
         st.session_state['recommend_rating'] = st.session_state['recommend_rating'] + [globals()[f"option3_{idx}"] for idx, voyage in enumerate(st.session_state['selected_values'])]
         st.experimental_rerun()
     
+# -------------------------------
+# Stage 4: 비슷한 여행지 추천
+# -------------------------------
 if st.session_state['recommendation_stage'] == True:
+    tmp_dict = {}
+    # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
+    for idx, voyage in enumerate(st.session_state['selected_values']):
+        tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
+    with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
+        recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
+
     if st.button("비슷한 여행지 추천 받기"):
+        st.balloons()
+        # User based filtering method
         st.markdown("# User-based filtering method")
-
+        st.text(recommend_list[0])
         st.divider()
 
-
+        # Memory based filtering method
         st.markdown("# Memory-based filtering method")
-
+        st.text(recommend_list[1])
         st.divider()
 
-
+        # content based filtering method
         st.markdown("# Content-based filtering method")
         # print(st.session_state['visit_area_dict'])
         for visited_area_name in st.session_state['selected_values']:
@@ -195,9 +197,21 @@ if st.session_state['recommendation_stage'] == True:
             visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
             st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
             st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
+
             result_df = recommend_content(merged_table, visited_area_id, st.session_state['visit_area_dict'])
+            
             for idx, row in result_df.iterrows():    
                 st.text(row['방문지명'])
+
+        st.divider()
+
+        # model based filtering method
+        st.markdown("# SVD method")
+        st.text(recommend_list[2])
+        st.divider()
+
+        st.markdown("# Matrix Factorization method")
+        st.text(recommend_list[3])
         st.divider()
     
         
