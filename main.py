@@ -104,7 +104,6 @@ def evaluate_model(area_code=1):
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
     dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 

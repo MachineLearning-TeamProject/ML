@@ -73,7 +73,12 @@ def split_feature(table):
             table = make_user_feature(table, ids, 3, 0, 1)
         else:
             table = make_user_feature(table, ids, 3, 0, 0)
-    # table = drop_columns(table, "TRAVEL_STATUS_ACCOMPANY")
+    return table
+
+def drop_noise(table):
+    table = table[~table['VISIT_AREA_NM'].str.endswith("역")]
+    table = table[~table['VISIT_AREA_NM'].str.endswith("학교")]
+    table = table[~table['VISIT_AREA_NM'].str.endswith("점")]
 
     return table
 
@@ -93,9 +98,7 @@ def process_table(table, table_name):
                                             'POI_ID','POI_NM', 'VISIT_CHC_REASON_CD', 'LODGING_TYPE_CD', 'SGG_CD', 'VISIT_START_YMD', 'VISIT_END_YMD',
                                             'VISIT_START_YMD', 'VISIT_END_YMD']
                                             
-    elif table_name == 'travel': 
-        # columns_to_drop = ['TRAVEL_PURPOSE', 'TRAVEL_PERSONA', 'TRAVEL_MISSION', 'TRAVEL_MISSION_CHECK',
-        #                                     'TRAVEL_START_YMD','TRAVEL_END_YMD']
+    elif table_name == 'travel':
         columns_to_drop = ['TRAVEL_PERSONA', 'TRAVEL_MISSION_CHECK',
                                             'TRAVEL_START_YMD','TRAVEL_END_YMD']
     elif table_name == 'user':
@@ -110,6 +113,7 @@ def process_table(table, table_name):
     # VISIT_AREA_TYPE_CD 필터링
     if table_name == "visit":
         table = drop_non_spots(table)
+        table = drop_noise(table)
 
     # REVISIT_YN 처리
     if 'REVISIT_YN' in table.columns:
