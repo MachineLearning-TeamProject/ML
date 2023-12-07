@@ -131,7 +131,7 @@ def process_table(table, table_name):
 
     return table
 
-## 16.5점 만점
+## calculate rating
 def get_rating(table, weight_0 = 0.8, weight_1 = 1.0, weight_2 = 1.5):
     table['RATING'] = weight_0 * table['REVISIT_INTENTION'] + weight_1 * table['RCMDTN_INTENTION'] + weight_2 * table['DGSTFN']
     return table
@@ -140,25 +140,14 @@ def merge_table(visit, travel, user):
     merge_table = pd.merge(travel,user, how='inner',on='TRAVELER_ID')
     merge_table = pd.merge(visit, merge_table, how='inner',on='TRAVEL_ID')
     ## Reordering
-    # merge_table = merge_table[['VISIT_ID', 'VISIT_AREA_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
-    #        'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
-    #        'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'RATING', 'VISIT_MM',
-    #         'TRAVEL_NM', 'MVMN_NM', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION', 'TRAVEL_MM',
-    #        'TRAVEL_STYL_1', 'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7', 'TRAVEL_STYL_8',
-    #        'TRAVEL_STATUS_ACCOMPANY', 'NUMBER_OF_PERSON', 'CHILDREN', 'PARENTS']]
     merge_table = merge_table[['VISIT_ID', 'TRAVEL_ID', 'TRAVELER_ID', 'VISIT_AREA_NM', 'LOTNO_ADDR',
                                'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN', 'DGSTFN',
                                'REVISIT_INTENTION', 'RCMDTN_INTENTION', 'RATING', 'VISIT_MM',
                                'MVMN_NM', 'TRAVEL_PURPOSE', 'TRAVEL_MISSION', 'TRAVEL_MM',
                                'TRAVEL_STYL_1', 'TRAVEL_STYL_3', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7',
                                'TRAVEL_STYL_8', 'NUMBER_OF_PERSON', 'CHILDREN', 'PARENTS']]
-    # 위에서 일괄 드랍
-    # merge_table = drop_columns(merge_table, ['VISIT_AREA_ID', 'TRAVEL_MM', 'TRAVEL_MM', 'TRAVEL_STATUS_ACCOMPANY'])
 
     return merge_table
-
-
-
 
 if __name__ == "__main__":
     print()

@@ -1,5 +1,3 @@
-import json
-
 import numpy as np
 import pandas as pd
 from scipy.linalg import svd
@@ -8,12 +6,15 @@ import time
 def singular_value_decomposition(table, user_id, n = 1000):
     print("Start SVD")
     start_time = time.time()
-    # hyperparameter n_components
+
     ## https://lsjsj92.tistory.com/m/569
     ## https://maxtime1004.tistory.com/m/91
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.svd.html
+    # items as vectors of latent features
     U, Sigma, Vt = svd(table, full_matrices=True)
     Sigma_mat = np.diag(Sigma)
+
+    # SVD reduces the dimensionality of the ratings matrix.
     result = np.round(np.dot(U[:, :n], np.dot(Sigma_mat[:n,:n], Vt[:n, :])), 1)
     result = pd.DataFrame(result, index=table.index, columns=table.columns).T[user_id]
     print("End SVD ", time.time() - start_time, " sec")
@@ -55,9 +56,10 @@ class MatrixFactorization():
         """
         training Matrix Factorization : Update matrix latent weight and bias
 
-        참고: self._b에 대한 설명
-        - global bias: input R에서 평가가 매겨진 rating의 평균값을 global bias로 사용
-        - 정규화 기능. 최종 rating에 음수가 들어가는 것 대신 latent feature에 음수가 포함되도록 해줌.
+        self._b:
+        - global bias: Use the average value of the rated rating in the input R as the global bias
+        - Normalization.
+        Instead of having a negative number in the final rating, allow the late feature to include a negative number.
 
         :return: training_process
         """
@@ -78,9 +80,6 @@ class MatrixFactorization():
         compute root mean square error
         :return: rmse cost
         """
-
-        # xi, yi: R[xi, yi]는 nonzero인 value를 의미한다.
-        # 참고: http://codepractice.tistory.com/90
         xi, yi = self._R.nonzero()
         predicted = self.get_complete_matrix()
         cost = np.sum(pow(self._R[xi, yi] - predicted[xi, yi], 2))
@@ -132,24 +131,22 @@ class MatrixFactorization():
         :return: prediction of r_ij
         """
         return self._bias + self._bias_user[i] + self._bias_item[j]+ self.user_latent.dot(self.item_latent.T)[i, j]
-        # return self._bias + self._bias_user[i] + self._bias_item[j] + self.user_latent[i, :].dot(self.item_latent[j, :].T)
-
 
     def get_complete_matrix(self):
         """
         computer complete matrix PXQ + P.bias + Q.bias + global bias
 
-        - PXQ 행렬에 b_P[:, np.newaxis]를 더하는 것은 각 열마다 bias를 더해주는 것
-        - b_Q[np.newaxis:, ]를 더하는 것은 각 행마다 bias를 더해주는 것
-        - b를 더하는 것은 각 element마다 bias를 더해주는 것
-
-        - newaxis: 차원을 추가해줌. 1차원인 Latent들로 2차원의 R에 행/열 단위 연산을 해주기위해 차원을 추가하는 것.
+        - PXQ Matrix
+        - Add self._bias_user : adding bias to each user
+        - Add self._bias_item : adding bias to each item(visit area)
+        - Add self._bias : Adding bias to each element
 
         :return: complete matrix R^
         """
         return self._bias + self._bias_user[:, np.newaxis] + self._bias_item[np.newaxis:, ] + self.user_latent.dot(self.item_latent.T)
 
     def test(self, user_id):
+        # Returns the result after performing Matrix Factorization.
         predicted = self.get_complete_matrix()
         predicted = np.round(predicted, 2)
         predicted = np.where(predicted > 16.5, 0.0, predicted)
@@ -157,6 +154,7 @@ class MatrixFactorization():
         return result
 
     def save_array(self):
+        # Save each bias and latent matrix
         np.save('parameter/bias', self._bias)
         np.save('parameter/bias_user', self._bias_user)
         np.save('parameter/bias_item', self._bias_item)
@@ -164,6 +162,7 @@ class MatrixFactorization():
         np.save('parameter/item_latent', self.item_latent)
 
     def load_array(self):
+        # load the saved bias and late feature.
         self._bias = np.load('parameter/bias.npy')
 
         bias_user = np.load('parameter/bias_user.npy')
@@ -177,24 +176,3 @@ class MatrixFactorization():
 
         item_latent = np.load('parameter/item_latent.npy')
         self.item_latent[:item_latent.shape[0], :] = item_latent
-
-    def print_results(self):
-        """
-        print fit results
-        """
-        print("User Latent P:")
-        print(self.user_latent)
-        print("Item Latent Q:")
-        print(self.item_latent.T)
-        print("P x Q:")
-        print(self.user_latent.dot(self.item_latent.T))
-        print("bias:")
-        print(self._bias)
-        print("User Latent bias:")
-        print(self._bias_user)
-        print("Item Latent bias:")
-        print(self._bias_item)
-        print("Final R matrix:")
-        print(self.get_complete_matrix())
-        print("Final RMSE:")
-        print(self._training_process[self._epochs-1][1])

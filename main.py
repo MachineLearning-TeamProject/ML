@@ -4,6 +4,7 @@ from preprocessing import process_table, merge_table
 import numpy as np
 from memory_based import user_based, item_based
 from model_based import MatrixFactorization, singular_value_decomposition
+from evaluation import recommend, evaluation_func
 
 area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서산간"}
 
@@ -29,41 +30,6 @@ def model_eval(user_visit_rating_matrix):
 def save_csv(area_code, **kwargs):
     for key, value in kwargs.items():
         value.to_csv(os.path.join("dataset","data_after_preprocessing", area[area_code], key)+".csv")
-
-
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-def rmse(y_true, y_pred):
-    return np.sqrt(mean_squared_error(y_true, y_pred))
-def mae(y_true, y_pred):
-    return mean_absolute_error(y_true, y_pred)
-
-def evaluation_func(predict_table, actual_table, threshold):
-    rmse_value = rmse(actual_table, predict_table)
-    mae_value = mae(actual_table, predict_table)
-
-    print(f"RMSE: {rmse_value}")
-    print(f"MAE: {mae_value}")
-
-    count_all = 0
-    correct = 0
-    for column in predict_table.columns:
-        if list(np.nonzero(actual_table[column]))[0].shape[0] > 2:
-            diff_list = np.isin(np.array(actual_table[column][actual_table[column] > 8.25].index),
-                                np.array(predict_table[column][predict_table[column] > threshold].index))
-
-            count_all += diff_list.shape[0]
-            correct += np.count_nonzero(diff_list)
-
-    print(f"Accuracy: {correct/count_all*100}%")
-    print()
-
-def recommend(dataset, actual_table, predict_table, user_id, threshold):
-    # print(np.array(predict_table) > 8.25)
-    predict_table = predict_table.drop(np.nonzero(actual_table * np.array(actual_table > 8.25))[0])
-    predict_table = predict_table.nlargest(10, user_id)
-    recommend_index = list(predict_table[np.array(predict_table) > threshold].index)
-    for idx in recommend_index:
-        print(np.array(dataset[dataset['VISIT_ID']==idx]['VISIT_AREA_NM'])[0])
 
 if __name__ == "__main__":
     area_code = 1
@@ -112,8 +78,11 @@ if __name__ == "__main__":
 
     if not evaluation:
         recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25)
+        print()
         recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25)
+        print()
         recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index,0.2)
+        print()
         recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25)
 
 
