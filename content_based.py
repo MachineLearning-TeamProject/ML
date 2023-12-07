@@ -2,12 +2,10 @@ import pandas as pd
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
 
 def preprocessing_for_content_based():
 
-    travel_table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
+    travel_table = pd.read_csv("dataset/data_after_preprocessing/수도권/dataset.csv")
 
     # 미션
     mission_name = ['쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
@@ -46,7 +44,7 @@ def preprocessing_for_content_based():
     travel_table = travel_table.fillna(0)
 
     # user table 관련 tag
-    user_table = pd.read_csv("dataset/data_after_preprocessing/dataset.csv")
+    user_table = pd.read_csv("dataset/data_after_preprocessing/수도권/dataset.csv")
 
     # 여행스타일에 따른 조건 함수 정의
     def apply_travel_style(row):
@@ -97,7 +95,7 @@ def preprocessing_for_content_based():
     # NaN 값을 0으로 채움
     user_table = user_table.fillna(0)
 
-    # travel tag와 user tag를 포함하는 테이블 만들기
+    # travel tag와 user tag을 포함하는 테이블 만들기
     merged_table = pd.merge(travel_table, user_table, on='VISIT_ID', how='inner')
 
     # # 행 정리
@@ -110,13 +108,13 @@ def preprocessing_for_content_based():
     
     travel_table = travel_table[travel_table_selected_feature]
 
-    user_table_selected_feature = ['VISIT_ID', '계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
+    user_table_selected_feature = ['VISIT_ID','계획에 따른 여행', '도시', '사진촬영 중요', '사진촬영 중요하지 않음',
     '상황에 따른 여행', '새로운 지역', '알려지지 않은 방문지', '익숙한 지역',
     '자연', '잘 알려지지 않은 방문지', '체험활동', '휴양/휴식']
     
     user_table = user_table[user_table_selected_feature]
     
-    merged_table_selected_feature = ['VISIT_ID', '쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
+    merged_table_selected_feature = ['VISIT_ID','쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
      '지역 문화예술/공연/전시시설 관람', '유흥/오락(나이트라이프)', '캠핑', '지역 축제/이벤트 참가', '온천/스파',
      '교육/체험 프로그램 참가', '드라마 촬영지 방문', '종교/성지 순례', 'Well-ness 여행', 'SNS 인생샷 여행',
      '호캉스 여행', '신규 여행지 발굴', '반려동물 동반 여행', '인플루언서 따라하기 여행', '친환경 여행(플로깅 여행)',
@@ -143,75 +141,75 @@ def preprocessing_for_content_based():
     user_table.reset_index(inplace=True)
     merged_table.reset_index(inplace=True)
 
-    travel_table = travel_table[['VISIT_ID', 'TAG']]
-    user_table = user_table[['VISIT_ID', 'TAG']]
-    merged_table = merged_table[['VISIT_ID', 'TAG']]
+    travel_table = travel_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
+    user_table = user_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
+    merged_table = merged_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
 
     # 결과를 CSV 파일로 저장
     travel_table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
     user_table.to_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
     merged_table.to_csv("dataset/data_after_preprocessing/content_based_combined.csv")
 
-def recommend(table):
+# def recommend(table):
     
-    # Drop rows where 'TAG' is NaN or 'np'
-    table = table.dropna(subset=['TAG'])
-    table = table[table['TAG'] != 'np']
+#     # Drop rows where 'TAG' is NaN or 'np'
+#     table = table.dropna(subset=['TAG'])
+#     table = table[table['TAG'] != 'np']
 
-    # Apply CountVectorizer to convert TAG into a matrix of token counts
-    count_vectorizer = CountVectorizer(tokenizer=lambda x: x.split(', '))
-    tag_matrix = count_vectorizer.fit_transform(table['TAG'])
+#     # Apply CountVectorizer to convert TAG into a matrix of token counts
+#     count_vectorizer = CountVectorizer(tokenizer=lambda x: x.split(', '))
+#     tag_matrix = count_vectorizer.fit_transform(table['TAG'])
 
-    # Calculate cosine similarity between items (VISIT_IDs)
-    cosine_sim = cosine_similarity(tag_matrix, tag_matrix)
+#     # Calculate cosine similarity between items (VISIT_IDs)
+#     cosine_sim = cosine_similarity(tag_matrix, tag_matrix)
 
-    # Function to get recommendations based on the cosine similarity
-    def get_recommendations(visit_id, cosine_sim=cosine_sim, table=table):
-        # Get the index of the visit_id using .loc
-        idx = table.loc[table['VISIT_ID'] == visit_id].index
+#     # Function to get recommendations based on the cosine similarity
+#     def get_recommendations(visit_id, cosine_sim=cosine_sim, table=table):
+#         # Get the index of the visit_id using .loc
+#         idx = table.loc[table['VISIT_ID'] == visit_id].index
 
-        if not idx.empty:
-            idx = idx[0]  # Access the first index if there are multiple matches
+#         if not idx.empty:
+#             idx = idx[0]  # Access the first index if there are multiple matches
 
-            # Get the pairwise similarity scores
-            sim_scores = list(enumerate(cosine_sim[idx]))
+#             # Get the pairwise similarity scores
+#             sim_scores = list(enumerate(cosine_sim[idx]))
 
-            # Sort the visits based on similarity scores
-            sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+#             # Sort the visits based on similarity scores
+#             sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
             
-            # Get the top 5 most similar visits (excluding itself)
-            top_similar_visits = [item[0] for item in sim_scores[1:11]]
+#             # Get the top 5 most similar visits (excluding itself)
+#             top_similar_visits = [item[0] for item in sim_scores[1:11]]
             
-            # Create a DataFrame with recommendations and corresponding cosine similarity
-            recommendations = table.iloc[top_similar_visits, [0, -1]]  # Assuming the last column is 'TAG'
+#             # Create a DataFrame with recommendations and corresponding cosine similarity
+#             recommendations = table.iloc[top_similar_visits, [0, -1]]  # Assuming the last column is 'TAG'
             
-            similarity_scores = [item[1] for item in sim_scores[1:11]]
-            recommendations['Cosine_Similarity'] = similarity_scores
+#             similarity_scores = [item[1] for item in sim_scores[1:11]]
+#             recommendations['Cosine_Similarity'] = similarity_scores
 
-            return recommendations
-        else:
-            print(f"VISIT_ID {visit_id} not found in the dataset.")
-            return pd.DataFrame()
+#             return recommendations
+#         else:
+#             print(f"VISIT_ID {visit_id} not found in the dataset.")
+#             return pd.DataFrame()
 
-    # Example: Get recommendations for VISIT_ID 1
-    print("Example: VISIT ID 1")
-    print(table.iloc[0]["TAG"])
-    recommendations = get_recommendations(1)
-    print(recommendations)
+#     # Example: Get recommendations for VISIT_ID 1
+#     print("Example: VISIT ID 1")
+#     print(table.iloc[0]["TAG"])
+#     recommendations = get_recommendations(1)
+#     print(recommendations)
 
-    # Example: Get recommendations for TARGET_VISIT_ID
-    TARGET_VISIT_ID = 3
+#     # Example: Get recommendations for TARGET_VISIT_ID
+#     TARGET_VISIT_ID = 3
 
-    print("\nExample: VISIT ID ", TARGET_VISIT_ID)
-    idx = table.loc[table['VISIT_ID'] == TARGET_VISIT_ID].index
-    print(table.iloc[idx]["TAG"])
-    recommendations = get_recommendations(TARGET_VISIT_ID)
-    print(recommendations)
+#     print("\nExample: VISIT ID ", TARGET_VISIT_ID)
+#     idx = table.loc[table['VISIT_ID'] == TARGET_VISIT_ID].index
+#     print(table.iloc[idx]["TAG"])
+#     recommendations = get_recommendations(TARGET_VISIT_ID)
+#     print(recommendations)
 
 if __name__ == "__main__":
 
     # 전처리 필요시 아래 주석 해제
-    # preprocessing_for_content_based()
+    preprocessing_for_content_based()
     
     # Load the merged table from the CSV file
     travel_table = pd.read_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
