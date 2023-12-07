@@ -62,7 +62,7 @@ def recommend_content(table, visited_id, visit_area_dict):
             
     
             print(recommendations.head())
-            
+
             return recommendations[['방문지명']]
         else:
             print(f"VISIT_ID {visit_id} not found in the dataset.")
