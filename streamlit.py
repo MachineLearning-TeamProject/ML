@@ -4,7 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from streamlit_searchbox import st_searchbox
 import csv
-from predict_content_based import recommend_content 
+from predict import recommend_content 
 from main import user_recommend
 
 
@@ -198,6 +198,9 @@ if st.session_state['recommendation_stage'] == True:
         st.balloons()
         # User based filtering method
         st.markdown("# User-based filtering method")
+        url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{tmp_dict}"
+        response = requests.get(url)
+        st.write(response.json())
         # st.text(recommend_list[0])
         st.divider()
 
