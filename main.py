@@ -31,6 +31,31 @@ def save_csv(area_code, **kwargs):
         value.to_csv(os.path.join("dataset","data_after_preprocessing", area[area_code], key)+".csv")
 
 
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+def rmse(y_true, y_pred):
+    return np.sqrt(mean_squared_error(y_true, y_pred))
+def mae(y_true, y_pred):
+    return mean_absolute_error(y_true, y_pred)
+
+def evaluation_func(predict_table, actual_table, threshold):
+    rmse_value = rmse(actual_table, predict_table)
+    mae_value = mae(actual_table, predict_table)
+
+    print(f"RMSE: {rmse_value}")
+    print(f"MAE: {mae_value}")
+
+    count_all = 0
+    correct = 0
+    for column in predict_table.columns:
+        diff_list = np.isin(np.array(actual_table[column][actual_table[column] > 8.25].index),
+                            np.array(predict_table[column][predict_table[column] > threshold].index))
+
+        count_all += diff_list.shape[0]
+        correct += np.count_nonzero(diff_list)
+
+    print(f"Accuracy: {correct/count_all*100}%")
+    print()
+
 if __name__ == "__main__":
     area_code = 1
 
@@ -46,23 +71,37 @@ if __name__ == "__main__":
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
+
     evaluation = True
     if evaluation:
         rating_matrix = model_eval(user_visit_rating_matrix)
+        rating_matrix_index = rating_matrix.index
     else:
         rating_matrix = user_visit_rating_matrix
+        # TODO
+        rating_matrix_index = rating_matrix.index
 
     # collaborative filtering
-    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix.index))
-    item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix.index))
+    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
+    evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
+
+    item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
+    evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
 
     # Model-based Filterting
-    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix.index,n=1000)
+    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index,n=1000)
+    evaluation_func(svd_result.copy(), user_visit_rating_matrix.T.copy(), 0.2)
 
-    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
-    factorizer.fit()
-    mf_result = factorizer.test(rating_matrix.index)
-
+    if evaluation:
+        factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
+        factorizer.fit()
+        mf_result = factorizer.test(rating_matrix_index)
+        evaluation_func(mf_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
+    else:
+        factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,verbose=True)
+        factorizer.load_array()
+        factorizer.fit()
+        # mf_result = factorizer.test(rating_matrix_index)
 
     # # save the file
     save_csv(area_code,

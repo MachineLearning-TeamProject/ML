@@ -46,7 +46,6 @@ def user_based(table, user_ids):
         results = pd.concat([results, result], axis=1)
 
     print("End User-Based Method ", round(time.time() - start_time, 2), "sec")
-    print()
     ## Evaluation function
     ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
     ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"
@@ -83,7 +82,6 @@ def item_based(table, user_ids):
         results = pd.concat([results, result], axis=1)
 
     print("End Item-Based Method ", round(time.time() - start_time, 2), "sec")
-    print()
     ## Evaluation function
     ## 0이 아닌 값 : 기존에 있던 rating이랑 차이점 비교
     ## 0 : 기존에 0이였으므로 추천도가 높은거 "추천"

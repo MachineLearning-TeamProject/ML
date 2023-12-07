@@ -187,6 +187,7 @@ def user_based_evaluation_one_user(table):
     while True:
         target_user = np.random.choice(test_data.index)
         target_user_total_visited_area = np.sum(test_data.loc[target_user] > 0)
+
         if target_user_total_visited_area > 3:
             break
 
