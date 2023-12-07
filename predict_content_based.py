@@ -3,15 +3,17 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import csv
 
-with open("visit_area_dict.csv", "r", encoding="utf-8") as f:
-    next(f)
-    reader = csv.reader(f)
-    visit_area_dict = {row[0]: row[1] for row in reader if row}
+# with open("visit_area_dict.csv", "r", encoding="utf-8") as f:
+#     next(f)
+#     reader = csv.reader(f)
+#     visit_area_dict = {row[0]: row[1] for row in reader if row}
 
 # # value값들만 리스트로 저장
 # visit_area_names = list(visit_area_dict.keys())
 
-def recommend_content(table, visited_id):
+def recommend_content(table, visited_id, visit_area_dict):
+    visit_area_dict = {v:k for k,v in visit_area_dict.items()}
+
     
     # Drop rows where 'TAG' is NaN or 'np'
     table = table.dropna(subset=['TAG'])
@@ -50,7 +52,7 @@ def recommend_content(table, visited_id):
             
             recommendations['유사도'] = similarity_scores
             
-            recommendations['VISIT_ID'].map(visit_area_dict)
+            # recommendations['VISIT_ID'].map(visit_area_dict)
             recommendations['VISIT_ID'] = recommendations['VISIT_ID'].astype(str)
             recommendations['VISIT_ID'].map(visit_area_dict)
             
@@ -66,7 +68,7 @@ def recommend_content(table, visited_id):
             print(f"VISIT_ID {visit_id} not found in the dataset.")
             return pd.DataFrame()
 
-    idx = table.loc[table['VISIT_ID'] == visited_id].index
+    # idx = table.loc[table['VISIT_ID'] == visited_id].index
     recommendations = get_recommendations(visited_id)
     
     return recommendations
