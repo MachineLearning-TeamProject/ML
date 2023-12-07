@@ -33,7 +33,7 @@ def save_csv(area_code, **kwargs):
     for key, value in kwargs.items():
         value.to_csv(os.path.join("dataset","data_after_preprocessing", area[area_code], key)+".csv")
 
-def add_user(dic, user_visit_rating_matrix):
+def add_user(dic, user_visit_rating_matrix, dataset):
     # dic = {'산정호수폭포': (4, 5, 5)}
     user_id = 'z000001'
     user_visit_rating_matrix = user_visit_rating_matrix.T
@@ -42,6 +42,48 @@ def add_user(dic, user_visit_rating_matrix):
         row_id = np.array(dataset[dataset['VISIT_AREA_NM']==visit_nm]['VISIT_ID'])[0]
         user_visit_rating_matrix.loc[row_id, user_id]= get_rating_(list(dic[visit_nm]))
     return user_visit_rating_matrix.T, [user_id]
+
+def user_recommend(arae_code, user_visit):
+    # open the file
+    visit_data, travel_data, user_data = read_data(area_code)
+
+    # preprocessing
+    processed_visit_data = process_table(visit_data, "visit")
+    processed_travel_data = process_table(travel_data, "travel")
+    processed_user_data = process_table(user_data, "user")
+    dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+
+    # row : User, column : item
+    user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
+
+    user_visit_rating_matrix, user_id = add_user(user_visit, user_visit_rating_matrix, dataset)
+    rating_matrix = user_visit_rating_matrix
+    rating_matrix_index = user_id
+
+    # collaborative filtering
+    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
+
+    item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
+
+    # Model-based Filterting
+    svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
+
+    factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,
+                                     verbose=False)
+    factorizer.load_array()
+    factorizer.fit()
+    mf_result = factorizer.test(rating_matrix_index)
+
+    recommend_list = []
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index, 0.2))
+    recommend_list.append(recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25))
+
+    return recommend_list
+
+def evaluate_model():
+    print()
 
 if __name__ == "__main__":
     area_code = 1
