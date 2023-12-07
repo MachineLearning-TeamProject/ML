@@ -18,7 +18,7 @@ def model_eval(user_visit_rating_matrix):
     test_mask = np.ones(user_visit_rating_matrix.shape)
     for idx, i in enumerate(np.array(user_visit_rating_matrix)):
         value_index = list(np.nonzero(i))[0]
-        if value_index.shape[0] > 3:
+        if value_index.shape[0] > 2:
             choice_num = value_index.shape[0] // 3
             val = np.random.choice(value_index, choice_num)
             test_mask[idx][val] = 0
@@ -47,17 +47,27 @@ def evaluation_func(predict_table, actual_table, threshold):
     count_all = 0
     correct = 0
     for column in predict_table.columns:
-        diff_list = np.isin(np.array(actual_table[column][actual_table[column] > 8.25].index),
-                            np.array(predict_table[column][predict_table[column] > threshold].index))
+        if list(np.nonzero(actual_table[column]))[0].shape[0] > 2:
+            diff_list = np.isin(np.array(actual_table[column][actual_table[column] > 8.25].index),
+                                np.array(predict_table[column][predict_table[column] > threshold].index))
 
-        count_all += diff_list.shape[0]
-        correct += np.count_nonzero(diff_list)
+            count_all += diff_list.shape[0]
+            correct += np.count_nonzero(diff_list)
 
     print(f"Accuracy: {correct/count_all*100}%")
     print()
 
+def recommend(dataset, actual_table, predict_table, user_id, threshold):
+    # print(np.array(predict_table) > 8.25)
+    predict_table = predict_table.drop(np.nonzero(actual_table * np.array(actual_table > 8.25))[0])
+    predict_table = predict_table.nlargest(10, user_id)
+    recommend_index = list(predict_table[np.array(predict_table) > threshold].index)
+    for idx in recommend_index:
+        print(np.array(dataset[dataset['VISIT_ID']==idx]['VISIT_AREA_NM'])[0])
+
 if __name__ == "__main__":
     area_code = 1
+    evaluation = False
 
     # open the file
     visit_data, travel_data, user_data = read_data(area_code)
@@ -71,37 +81,41 @@ if __name__ == "__main__":
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
-
-    evaluation = True
     if evaluation:
         rating_matrix = model_eval(user_visit_rating_matrix)
         rating_matrix_index = rating_matrix.index
     else:
         rating_matrix = user_visit_rating_matrix
-        # TODO
-        rating_matrix_index = rating_matrix.index
+        rating_matrix_index = ['a000012']
 
     # collaborative filtering
     user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
-    evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
+    evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
     item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
-    evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
+    evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
     # Model-based Filterting
     svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index,n=1000)
-    evaluation_func(svd_result.copy(), user_visit_rating_matrix.T.copy(), 0.2)
+    evaluation_func(svd_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 0.2)
 
     if evaluation:
         factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300, verbose=True)
         factorizer.fit()
         mf_result = factorizer.test(rating_matrix_index)
-        evaluation_func(mf_result.copy(), user_visit_rating_matrix.T.copy(), 8.25)
+        evaluation_func(mf_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
     else:
         factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50,verbose=True)
         factorizer.load_array()
         factorizer.fit()
-        # mf_result = factorizer.test(rating_matrix_index)
+        mf_result = factorizer.test(rating_matrix_index)
+
+    if not evaluation:
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], user_based_result, rating_matrix_index, 8.25)
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], item_based_result, rating_matrix_index, 8.25)
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], svd_result, rating_matrix_index,0.2)
+        recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25)
+
 
     # # save the file
     save_csv(area_code,
