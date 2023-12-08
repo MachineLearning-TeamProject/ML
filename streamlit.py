@@ -195,7 +195,7 @@ if st.session_state['recommendation_stage'] == True:
     st.info(' 이제 다 되었습니다! \n\n 아래 버튼을 클릭해 결과를 확인해보세요!', icon="😆")
     
     selected_model = st.selectbox('모델을 선택해주세요.',
-            ('User-based filtering method', 'Memory-based filtering method', 'Content-based filtering method', 'SVD method', 'Matrix-Factorization method'),
+            ('User-based filtering method', 'Item-based filtering method', 'Content-based filtering method', 'SVD method', 'Matrix-Factorization method'),
             key = "key4")
     
     if st.button("비슷한 여행지 추천 받기"):
@@ -217,20 +217,24 @@ if st.session_state['recommendation_stage'] == True:
                     response = requests.post(url, json=data) 
                 st.write(response.json())
                 
-            elif selected_model == 'Memory-based filtering method':
-                # [2] Memory based filtering method
-                st.markdown("# Memory-based filtering method")
+            elif selected_model == 'Item-based filtering method':
+                # [2] Item based filtering method
+                st.markdown("# Item-based filtering method")
                 with st.spinner("추천 중입니다... ❤️"):
-                    url = f"http://localhost:8080/memory_based"
+                    url = f"http://localhost:8080/item_based"
                     data = {
                         "region": st.session_state['selected_region'],
                         "user_visit": tmp_dict
                     }
                     response = requests.post(url, json=data) 
-                if response.json()['detail'] == "Not Found":
+                if len(response.json()) == 0:
                     st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
                 else: 
                     st.write(response.json())
+                # if response.json()['detail'] == "Not Found":
+                #     st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
+                # else: 
+                #     st.write(response.json())
                 
             elif selected_model == 'Content-based filtering method':
                 # [3] content based filtering method
