@@ -13,10 +13,11 @@ async def hello():
     return {"hello":"world"}
 
 @app.get("/{region}/content_based/{visit_id}")
-async def content_based(region:str, visit_id: int):
+async def content_based(region:str, visit_id: str):
     print(region)
     print(visit_id)
-    return recommend_content(region, visit_id)
+    result = recommend_content(region, int(visit_id))
+    return result
 
 class History(BaseModel):
     region: str
@@ -59,9 +60,9 @@ async def mf_based(data_request: History):
     return recommend_mf(area_code, data_request.user_visit)
     
 @app.get("/{region}/info/{visit_id}")
-async def info(region:str, visit_id: int):
-    
-    result = get_info(region, visit_id)
+async def info(region:str, visit_id: str):
+
+    result = get_info(region, int(visit_id))
     
     return result
 

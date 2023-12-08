@@ -51,25 +51,25 @@ def data_preprocessing(area_code, user_visit):
 def recommend_content(region, visit_id):
 
     if region == '수도권':
-        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\content_based_combined.csv')
+        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\수도권\content_based_combined.csv')
         with open("visit_area_dict_수도권.csv", "r", encoding="utf-8") as f:
             next(f)
             reader = csv.reader(f)
             visit_area_dict = {row[0]: row[1] for row in reader if row}
     elif region == '동부권':
-        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\content_based_combined.csv')
+        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\동부권\content_based_combined.csv')
         with open("visit_area_dict_동부권.csv", "r", encoding="utf-8") as f:
             next(f)
             reader = csv.reader(f)
             visit_area_dict = {row[0]: row[1] for row in reader if row}
-    elif region == '서부권':
-        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\content_based_combined.csv')
+    elif region == '서부권': 
+        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\서부권\content_based_combined.csv')
         with open("visit_area_dict_서부권.csv", "r", encoding="utf-8") as f:
             next(f)
             reader = csv.reader(f)
             visit_area_dict = {row[0]: row[1] for row in reader if row}
     elif region == '제주도 및 도서 지역':
-        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\content_based_combined.csv')
+        table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\도서지역\content_based_combined.csv')
         with open("visit_area_dict_제주도_및_도서_지역.csv", "r", encoding="utf-8") as f:
             next(f)
             reader = csv.reader(f)

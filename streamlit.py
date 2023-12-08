@@ -2,13 +2,16 @@ import requests
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
+import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
+from streamlit_modal import Modal
 import csv
 import webbrowser
 
 # Session State also supports attribute based syntax
 # ----------------------------------------
 # stage 변수 초기화
+
 if 'select_region_stage' not in st.session_state:
     st.session_state['select_region_stage'] = True
 
@@ -113,7 +116,9 @@ st.title("Where to go?")
 # -------------------------------
 # Stage 1: 여행하고 싶은 지역 선택
 # -------------------------------
+
 if st.session_state['select_region_stage'] == True:
+    st.info(' 동서남북 어디로 떠나고 싶은가요?? \n\n 현재, 수도권, 동부권, 서부권, 제주도 및 도서지역이 지원됩니다.', icon="🧭")
     region = st.selectbox(
                 '여행하고 싶은 지역을 선택해주세요',
                 ('수도권', '동부권', '서부권', '제주도 및 도서 지역')
@@ -133,6 +138,7 @@ def search_visit_area(searchterm):
 # Stage 2: 가본 곳 선택
 # -------------------------------
 if st.session_state['select_voyage_stage'] == True:
+    st.info(' 재밌었던 여행지, 별로였던 여행지 어디든 좋아요. \n\n 아래 검색창에서 검색 후, [가본 곳 추가하기] 버튼 클릭!', icon="🗺️")
     st.caption('가본 곳을 선택해주세요.')
     selected_value = st_searchbox(
         search_visit_area,
@@ -154,6 +160,7 @@ if st.session_state['select_voyage_stage'] == True:
 # Stage 3: 만족도 평가
 # -------------------------------
 if st.session_state['rating_stage'] == True:
+    st.info(' 얼마나 만족스러운 여행이었나요? \n\n 간단한 설문에 답변해주세요!', icon="😆")
     for idx, voyage in enumerate(st.session_state['selected_values']):
         st.markdown("## " + voyage)
         globals()[f"option1_{idx}"] = st.selectbox(
@@ -184,7 +191,7 @@ if st.session_state['rating_stage'] == True:
 # Stage 4: 비슷한 여행지 추천
 # -------------------------------
 if st.session_state['recommendation_stage'] == True:
-    
+    st.info(' 이제 다 되었습니다! \n\n 아래 버튼을 클릭해 결과를 확인해보세요!', icon="😆")
     # 비슷한 여행지 추천 받는 기능을 server.py에 fastapi 형태로 구현해줘
     # 그리고 그걸 여기서 불러와서 쓰면 될 듯
     # 그러면 여기서는 그냥 버튼 누르면 추천 받는 거로 해도 될 듯
@@ -210,80 +217,121 @@ if st.session_state['recommendation_stage'] == True:
             st.write(response.json())
             st.divider()
 
-            # # [2] Memory based filtering method
-            # st.markdown("# Memory-based filtering method")
-            # with st.spinner("추천 중입니다... ❤️"):
-            #     url = f"http://localhost:8080/memory_based"
-            #     data = {
-            #         "region": st.session_state['selected_region'],
-            #         "user_visit": tmp_dict
-            #     }
-            #     response = requests.post(url, json=data) 
-            # st.write(response.json())
-            # st.divider()
-
-            # # [3] content based filtering method
-            # st.markdown("# Content-based filtering method")
-            # # print(st.session_state['visit_area_dict'])
-            # with st.spinner("추천 중입니다... ❤️"):
-            #     for visited_area_name in st.session_state['selected_values']:
-                    
-            #         visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
-            #         st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
-            #         st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
-            #         # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
-                    
-            #         url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
-            #         response = requests.get(url)
-            #         st.write(response.json())
-
-            # st.divider()
-
-            # # [4] model based filtering method - SVD
-            # st.markdown("# SVD method")
-            # with st.spinner("추천 중입니다... 10초 정도 소요됩니다 ❤️"):
-            #     url = f"http://localhost:8080/svd_based"
-            #     data = {
-            #         "region": st.session_state['selected_region'],
-            #         "user_visit": tmp_dict
-            #     }
-            #     response = requests.post(url, json=data) 
-            # st.write(response.json())
-            # st.divider()
-
-            # # [5] model based filtering method - Matrix Factorization
-            # st.markdown("# Matrix Factorization method")
-            # with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
-            #     url = f"http://localhost:8080/mf_based"
-            #     data = {
-            #         "region": st.session_state['selected_region'],
-            #         "user_visit": tmp_dict
-            #     }
-            #     response = requests.post(url, json=data) 
-            # st.write(response.json())
-            # # st.text(recommend_list[3])
+            # [2] Memory based filtering method
+            st.markdown("# Memory-based filtering method")
+            with st.spinner("추천 중입니다... ❤️"):
+                url = f"http://localhost:8080/memory_based"
+                data = {
+                    "region": st.session_state['selected_region'],
+                    "user_visit": tmp_dict
+                }
+                response = requests.post(url, json=data) 
+            st.write(response.json())
             st.divider()
 
-    # 정보 제공
-    st.markdown("### 가보고 싶은 곳이 생기셨나요?")
+            # [3] content based filtering method
+            st.markdown("# Content-based filtering method")
+            # print(st.session_state['visit_area_dict'])
+            with st.spinner("추천 중입니다... ❤️"):
+                for visited_area_name in st.session_state['selected_values']:
+                    
+                    visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
+                    st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+                    st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
+                    # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
+                    
+                    url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
+                    response = requests.get(url)
+                    st.write(response.json())
+
+            st.divider()
+
+            # [4] model based filtering method - SVD
+            st.markdown("# SVD method")
+            with st.spinner("추천 중입니다... 10초 정도 소요됩니다 ❤️"):
+                url = f"http://localhost:8080/svd_based"
+                data = {
+                    "region": st.session_state['selected_region'],
+                    "user_visit": tmp_dict
+                }
+                response = requests.post(url, json=data) 
+            st.write(response.json())
+            st.divider()
+
+            # [5] model based filtering method - Matrix Factorization
+            st.markdown("# Matrix Factorization method")
+            with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
+                url = f"http://localhost:8080/mf_based"
+                data = {
+                    "region": st.session_state['selected_region'],
+                    "user_visit": tmp_dict
+                }
+                response = requests.post(url, json=data) 
+            st.write(response.json())
+            # st.text(recommend_list[3])
+            st.divider()
 
     
-    value_to_search = st_searchbox(
-        search_visit_area,
-        key="visit_area_searchbox",
-    )       
-    if st.button('알아보기'):
-        url = 'https://map.naver.com/p/search/' + str(value_to_search)
-        webbrowser.open_new_tab(url)
 
-    if st.button('다른 사용자들의 평가 보기'):
-        visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
-        # st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
-        st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
+
+    # # modal = Modal("여행지 정보", key="demo-modal")
+    # model = st.expander("Advanced options")
+    # # 정보 제공
+    # st.markdown("### 가보고 싶은 곳이 생기셨나요?")
+
+    
+    # value_to_search = st_searchbox(
+    #     search_visit_area,
+    #     key="visit_area_searchbox",
+    # )
+
+    
+    # if modal.is_open():
+    #     with modal.container():
+    #         # 배경화면 검은색으로
+    #         # html_string = \
+    #         # '''
+    #         # <head>
+    #         # <style>
+    #         # .modal-content {
+    #         #     background-color: black;
+    #         # }
+    #         # </style>
+    #         # </head>
+    #         # '''
+    #         # components.html(html_string)
         
-        url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
-        response = requests.get(url)
-        st.write(response.json())
+    #         # 배경 검은색
+    #         # st.markdown("<style>body {background-color: #000000;}</style>", unsafe_allow_html=True)
+            
+    #         st.write("")
+    #         visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
+    #         # st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+            
+    #         # st.markdown을 검은색 글씨로 바꿔줘 (st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.'))
+    #         st.markdown("<style>body {color: #ffffff;}</style>", unsafe_allow_html=True)
+    #         st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
+            
+    #         url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
+    #         response = requests.get(url)
+    #         st.write(response.json())
+
+            
+    #         value = st.checkbox("Check me")
+    #         st.write(f"Checkbox checked: {value}")
+
+    # if st.button('알아보기'):
+    #     url = 'https://map.naver.com/p/search/' + str(value_to_search)
+    #     webbrowser.open_new_tab(url)
+
+    # if st.button('다른 사용자들의 평가 보기'):  
+    #     modal.open()
+    #     visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
+    #     st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
+        
+    #     url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
+    #     response = requests.get(url)
+    #     st.write(response.json())
     
         
     
