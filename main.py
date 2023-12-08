@@ -1,15 +1,15 @@
-import random
-
 import pandas as pd
 import os
-from preprocessing import process_table, merge_table, get_rating_
+from preprocessing import process_table, merge_table
 import numpy as np
 from memory_based import user_based, item_based
 from model_based import MatrixFactorization, singular_value_decomposition
-from evaluation import recommend, evaluation_func
+from evaluation import evaluation_func
 
+# Code dictionary for each area.
 area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서지역"}
 
+# Read data files for each Area
 def read_data(key):
     visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보.csv"))
     travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행.csv"))
@@ -17,6 +17,7 @@ def read_data(key):
 
     return visit_data, travel_data, user_data
 
+# To evaluate the model, cover some data with a mask to create test data.
 def model_eval(user_visit_rating_matrix):
     test_mask = np.ones(user_visit_rating_matrix.shape)
     for idx, i in enumerate(np.array(user_visit_rating_matrix)):
@@ -29,18 +30,10 @@ def model_eval(user_visit_rating_matrix):
     user_visit_rating_matrix_mask = test_mask * user_visit_rating_matrix
     return user_visit_rating_matrix_mask
 
+# Save the file.
 def save_csv(area_code, **kwargs):
     for key, value in kwargs.items():
         value.to_csv(os.path.join("dataset", "data_after_preprocessing", area[area_code], key) + ".csv")
-
-def add_user(dic, user_visit_rating_matrix, dataset):
-    user_id = 'z000001'
-    user_visit_rating_matrix = user_visit_rating_matrix.T
-    user_visit_rating_matrix[user_id] = np.zeros(user_visit_rating_matrix.shape[0])
-    for visit_nm in dic.keys():
-        row_id = np.array(dataset[dataset['VISIT_AREA_NM'] == visit_nm]['VISIT_ID'])[0]
-        user_visit_rating_matrix.loc[row_id, user_id] = get_rating_(list(dic[visit_nm]))
-    return user_visit_rating_matrix.T, [user_id]
 
 def evaluate_model(area_code=1):
     """
@@ -60,27 +53,27 @@ def evaluate_model(area_code=1):
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
     dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
-    
-    dataset.to_csv(os.path.join("dataset", "data_after_preprocessing", area[area_code], 'dataset') + ".csv")
-    
-    # assert 0
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
     rating_matrix = model_eval(user_visit_rating_matrix)
     rating_matrix_index = rating_matrix.index
-
+    
     # collaborative filtering
-    # user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
-    # evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
+    # User-Based
+    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
+    evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
+    # Item-Based
     item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
     evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
-    exit()
+
     # Model-based Filterting
+    # SVD
     svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
     evaluation_func(svd_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 0.2)
 
+    # Matrix Factorization
     factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=300,
                                      verbose=True)
     factorizer.fit()
@@ -101,8 +94,4 @@ def evaluate_model(area_code=1):
 
 
 if __name__ == "__main__":
-    # user_recommend(1, {'경복궁': (4, 5, 5), '108하늘계단': (5, 4, 5)})
-    evaluate_model(4)
-
-    # user input 받기
-    # 재방문의향, 추천의향, 만족도 순서
+    evaluate_model(2)

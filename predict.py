@@ -172,3 +172,6 @@ def recommend_mf(area_code, user_visit):
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25)
     
     return recommend_list
+
+if __name__ == "__main__":
+    print(recommend_mf(1, {'108하늘계단': [5, 5, 5]}))
