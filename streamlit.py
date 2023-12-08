@@ -227,7 +227,10 @@ if st.session_state['recommendation_stage'] == True:
                     "user_visit": tmp_dict
                 }
                 response = requests.post(url, json=data) 
-            st.write(response.json())
+            if response.json()['detail'] == "Not Found":
+                st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
+            else: 
+                st.write(response.json())
             st.divider()
 
             # [3] content based filtering method
@@ -243,7 +246,11 @@ if st.session_state['recommendation_stage'] == True:
                     
                     url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
                     response = requests.get(url)
-                    st.write(response.json())
+                    if len(response.json()) == 0:
+                        st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
+                    else: 
+                        st.write(response.json())
+                    # st.write(response.json())
 
             st.divider()
 
@@ -259,18 +266,16 @@ if st.session_state['recommendation_stage'] == True:
             st.write(response.json())
             st.divider()
 
-            # # [5] model based filtering method - Matrix Factorization
-            # st.markdown("# Matrix Factorization method")
-            # with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
-            #     url = f"http://localhost:8080/mf_based"
-            #     data = {
-            #         "region": st.session_state['selected_region'],
-            #         "user_visit": tmp_dict
-            #     }
-            #     response = requests.post(url, json=data) 
-            # st.write(response.json())
-            # # st.text(recommend_list[3])
-            # st.divider()
+            # [5] model based filtering method - Matrix Factorization
+            st.markdown("# Matrix Factorization method")
+            with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
+                url = f"http://localhost:8080/mf_based"
+                data = {
+                    "region": st.session_state['selected_region'],
+                    "user_visit": tmp_dict
+                }
+                response = requests.post(url, json=data) 
+            st.write(response.json())
 
     st.divider()
     st.info(' 가고 싶은 곳이 생기셨나요? \n\n 아래 버튼을 클릭해 더 자세히 알아보세요!', icon="🚀")
