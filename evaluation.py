@@ -1,11 +1,15 @@
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
 
+# Root Mean Squared Error (RMSE) calculation function
 def rmse(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
+
+# Mean Absolute Error (MAE) calculation function
 def mae(y_true, y_pred):
     return mean_absolute_error(y_true, y_pred)
 
+# Evaluation function that calculates and prints RMSE, MAE, and Accuracy
 def evaluation_func(predict_table, actual_table, threshold):
     rmse_value = rmse(actual_table, predict_table)
     mae_value = mae(actual_table, predict_table)
@@ -25,6 +29,7 @@ def evaluation_func(predict_table, actual_table, threshold):
     print(f"Accuracy: {correct/count_all*100}%")
     print()
 
+# Recommendation function that returns a list of recommended items
 def recommend(dataset, actual_table, predict_table, user_id, threshold):
     predict_table = predict_table.drop(actual_table.index[np.nonzero(actual_table * np.array(actual_table > 8.25))[0]])
     predict_table = predict_table.nlargest(10, user_id)
