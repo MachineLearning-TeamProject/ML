@@ -1,12 +1,22 @@
 import pandas as pd
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-REGION = "도서지역"
 
-def preprocessing_for_content_based():
 
-    travel_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/dataset.csv")
+def preprocessing_for_content_based(region):
+    """
+    Preprocesses the data for content-based recommendation.
+
+    Reads the travel data from a CSV file, performs data manipulation and feature engineering,
+    and saves the preprocessed data to separate CSV files.
+
+    Args:
+    - region (str): The region for which the data is being preprocessed.
+
+    Returns:
+    None
+    """
+
+    travel_table = pd.read_csv(f"dataset/data_after_preprocessing/{region}/dataset.csv")
 
     # 미션
     mission_name = ['쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
@@ -45,7 +55,7 @@ def preprocessing_for_content_based():
     travel_table = travel_table.fillna(0)
 
     # user table 관련 tag
-    user_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/dataset.csv")
+    user_table = pd.read_csv(f"dataset/data_after_preprocessing/{region}/dataset.csv")
 
     # 여행스타일에 따른 조건 함수 정의
     def apply_travel_style(row):
@@ -149,92 +159,11 @@ def preprocessing_for_content_based():
 
     # 결과를 CSV 파일로 저장
     
-    travel_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_travel.csv")
-    user_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_user.csv")
-    merged_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_combined.csv")
-
-# def recommend(table):
-    
-#     # Drop rows where 'TAG' is NaN or 'np'
-#     table = table.dropna(subset=['TAG'])
-#     table = table[table['TAG'] != 'np']
-
-#     # Apply CountVectorizer to convert TAG into a matrix of token counts
-#     count_vectorizer = CountVectorizer(tokenizer=lambda x: x.split(', '))
-#     tag_matrix = count_vectorizer.fit_transform(table['TAG'])
-
-#     # Calculate cosine similarity between items (VISIT_IDs)
-#     cosine_sim = cosine_similarity(tag_matrix, tag_matrix)
-
-#     # Function to get recommendations based on the cosine similarity
-#     def get_recommendations(visit_id, cosine_sim=cosine_sim, table=table):
-#         # Get the index of the visit_id using .loc
-#         idx = table.loc[table['VISIT_ID'] == visit_id].index
-
-#         if not idx.empty:
-#             idx = idx[0]  # Access the first index if there are multiple matches
-
-#             # Get the pairwise similarity scores
-#             sim_scores = list(enumerate(cosine_sim[idx]))
-
-#             # Sort the visits based on similarity scores
-#             sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-            
-#             # Get the top 5 most similar visits (excluding itself)
-#             top_similar_visits = [item[0] for item in sim_scores[1:11]]
-            
-#             # Create a DataFrame with recommendations and corresponding cosine similarity
-#             recommendations = table.iloc[top_similar_visits, [0, -1]]  # Assuming the last column is 'TAG'
-            
-#             similarity_scores = [item[1] for item in sim_scores[1:11]]
-#             recommendations['Cosine_Similarity'] = similarity_scores
-
-#             return recommendations
-#         else:
-#             print(f"VISIT_ID {visit_id} not found in the dataset.")
-#             return pd.DataFrame()
-
-#     # Example: Get recommendations for VISIT_ID 1
-#     print("Example: VISIT ID 1")
-#     print(table.iloc[0]["TAG"])
-#     recommendations = get_recommendations(1)
-#     print(recommendations)
-
-#     # Example: Get recommendations for TARGET_VISIT_ID
-#     TARGET_VISIT_ID = 3
-
-#     print("\nExample: VISIT ID ", TARGET_VISIT_ID)
-#     idx = table.loc[table['VISIT_ID'] == TARGET_VISIT_ID].index
-#     print(table.iloc[idx]["TAG"])
-#     recommendations = get_recommendations(TARGET_VISIT_ID)
-#     print(recommendations)
+    travel_table.to_csv(f"dataset/data_after_preprocessing/{region}/content_based_only_travel.csv")
+    user_table.to_csv(f"dataset/data_after_preprocessing/{region}/content_based_only_user.csv")
+    merged_table.to_csv(f"dataset/data_after_preprocessing/{region}/content_based_combined.csv")
 
 if __name__ == "__main__":
 
     # 전처리 필요시 아래 주석 해제
-    preprocessing_for_content_based()
-    
-    # Load the merged table from the CSV file
-    travel_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_travel.csv")
-    user_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_user.csv")
-    merged_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_combined.csv")
-
-    # # Recommendation (Using only travel tag)
-    # print("-------------------------------------------")
-    # print("[1] Recommendation (Using only travel tag)")
-    # print("-------------------------------------------")
-
-    # recommend(travel_table)
-
-    # # Recommendation (Using only user tag)
-    # print("\n-------------------------------------------")
-    # print("[2] Recommendation (Using only user tag)")
-    # print("-------------------------------------------")
-    
-    # recommend(user_table)
-
-    # # Recommendation (Using travel & user tag)
-    # print("\n-------------------------------------------")
-    # print("[3] Recommendation (Using travel & user tag)")
-    # print("-------------------------------------------")
-    # recommend(merged_table)
+    preprocessing_for_content_based("수도권")
