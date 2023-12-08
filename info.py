@@ -3,21 +3,22 @@ import pandas as pd
 import numpy as np
 
 def get_info(region, visit_id):
-    # open the file
+    # Open the file
     df = pd.read_csv(os.path.join("dataset", "data_after_preprocessing", region, "dataset.csv"))
 
+    # Group by VISIT_ID
     df = df.groupby("VISIT_ID")
-    
-    # 특정 방문지에 대한 평균 만족도
+
+    # Average satisfaction for a specific visited place
     mean_satisfaction = df.get_group(visit_id)["DGSTFN"].mean()
 
-    # 특정 방문지에 대한 재방문 의향
+    # Average revisit intention for a specific visited place
     mean_revisit_intention = df.get_group(visit_id)["REVISIT_INTENTION"].mean()
 
-    # 특정 방문지에 대한 추천 의향
+    # Average recommendation intention for a specific visited place
     mean_recommendation_intention = df.get_group(visit_id)["RCMDTN_INTENTION"].mean()
 
-    # 특정 방문지에 대한 리뷰 수
+    # Number of reviews for a specific visited place
     review_count = df.get_group(visit_id)["RATING"].count()
 
     # Convert numpy.int64 values to regular Python integers

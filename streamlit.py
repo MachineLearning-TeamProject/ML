@@ -6,9 +6,7 @@ from streamlit_star_rating import st_star_rating
 import csv
 import webbrowser
 
-# Session State also supports attribute based syntax
-# ----------------------------------------
-# stage 변수 초기화
+# Initialize stage variables
 
 if 'select_region_stage' not in st.session_state:
     st.session_state['select_region_stage'] = True
@@ -106,13 +104,12 @@ merged_table = pd.read_csv("C:\ML\dataset\data_after_preprocessing\content_based
 
 
 # ========================================
-# 페이지 시작
+# Page Start
 # ========================================
-
 st.title("Where to go?")
 
 # -------------------------------
-# Stage 1: 여행하고 싶은 지역 선택
+# Stage 1: Select Desired Region
 # -------------------------------
 
 if st.session_state['select_region_stage'] == True:
@@ -133,7 +130,7 @@ def search_visit_area(searchterm):
     return [visit_area_name for visit_area_name in st.session_state['visit_area_names'] if searchterm in visit_area_name]
 
 # -------------------------------
-# Stage 2: 가본 곳 선택
+# Stage 2: Select Visited Places
 # -------------------------------
 if st.session_state['select_voyage_stage'] == True:
     st.info(' 재밌었던 여행지, 별로였던 여행지 어디든 좋아요. \n\n 아래 검색창에서 검색 후, [가본 곳 추가하기] 버튼 클릭!', icon="🗺️")
@@ -155,7 +152,7 @@ if st.session_state['select_voyage_stage'] == True:
         st.experimental_rerun()
 
 # -------------------------------
-# Stage 3: 만족도 평가
+# Stage 3: Satisfaction Rating
 # -------------------------------
 if st.session_state['rating_stage'] == True:
     st.info(' 얼마나 만족스러운 여행이었나요? \n\n 간단한 설문에 답변해주세요!', icon="😆")
@@ -186,8 +183,9 @@ if st.session_state['rating_stage'] == True:
         st.experimental_rerun()
     
 # -------------------------------
-# Stage 4: 비슷한 여행지 추천
+# Stage 4: Recommend Similar Places
 # -------------------------------
+
 if st.session_state['recommendation_stage'] == True:
     st.info(' 이제 다 되었습니다! \n\n 아래 버튼을 클릭해 결과를 확인해보세요!', icon="😆")
     
@@ -228,10 +226,6 @@ if st.session_state['recommendation_stage'] == True:
                     st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
                 else: 
                     st.write(response.json())
-                # if response.json()['detail'] == "Not Found":
-                #     st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
-                # else: 
-                #     st.write(response.json())
                 
             elif selected_model == 'Content-based filtering method':
                 # [3] content based filtering method

@@ -11,6 +11,16 @@ from evaluation import recommend
 from main import read_data
 
 def data_preprocessing(area_code, user_visit):
+    """
+    Preprocesses the data for recommendation system.
+
+    Args:
+        area_code (str): The area code.
+        user_visit (dict): Dictionary containing user visit data.
+
+    Returns:
+        tuple: A tuple containing the rating matrix, rating matrix index, user visit rating matrix, and dataset.
+    """
     def add_user(dic, user_visit_rating_matrix, dataset):
         user_id = 'z000001'
         user_visit_rating_matrix = user_visit_rating_matrix.T
@@ -40,7 +50,17 @@ def data_preprocessing(area_code, user_visit):
 
 
 def recommend_content(region, visit_id):
+    """
+    Recommends content based on the given region and visit ID.
 
+    Parameters:
+    region (str): The region for which content recommendations are needed.
+    visit_id (int): The ID of the visit for which content recommendations are needed.
+
+    Returns:
+    pandas.DataFrame: A DataFrame containing the recommended content with visit area names and similarity scores.
+    """
+    # Read the dataset
     if region == '수도권':
         table = pd.read_csv('C:\ML\dataset\data_after_preprocessing\수도권\content_based_combined.csv')
         with open("visit_area_dict_수도권.csv", "r", encoding="utf-8") as f:
@@ -125,6 +145,16 @@ def recommend_content(region, visit_id):
     return recommendations
 
 def recommend_user(area_code, user_visit):
+    """
+    Recommends users based on the given area code and user visit data.
+
+    Parameters:
+    area_code (str): The area code for which users are recommended.
+    user_visit (list): The user visit data.
+
+    Returns:
+    list: The list of recommended users.
+    """
     rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     # collaborative filtering
@@ -134,6 +164,16 @@ def recommend_user(area_code, user_visit):
     return recommend_list
 
 def recommend_item(area_code, user_visit):
+    """
+    Recommends items based on collaborative filtering.
+
+    Parameters:
+    area_code (str): The area code.
+    user_visit (list): The user visit data.
+
+    Returns:
+    list: The recommended item list.
+    """
     rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     # collaborative filtering
@@ -144,6 +184,16 @@ def recommend_item(area_code, user_visit):
 
 
 def recommend_svd(area_code, user_visit):
+    """
+    Recommends items using Singular Value Decomposition (SVD) based filtering.
+
+    Args:
+        area_code (str): The area code for which recommendations are generated.
+        user_visit (list): The user visit data.
+
+    Returns:
+        list: The list of recommended items.
+    """
     rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     # model_based filtering
@@ -154,6 +204,16 @@ def recommend_svd(area_code, user_visit):
     return recommend_list
 
 def recommend_mf(area_code, user_visit):
+    """
+    Recommends items to a user based on matrix factorization.
+
+    Args:
+        area_code (str): The area code for which recommendations are generated.
+        user_visit (list): The user's visit history.
+
+    Returns:
+        list: The recommended list of items.
+    """
     rating_matrix, rating_matrix_index, user_visit_rating_matrix, dataset = data_preprocessing(area_code, user_visit)
 
     factorizer = MatrixFactorization(rating_matrix.copy(), k=3, learning_rate=0.01, reg_param=0.01, epochs=50, verbose=False)
