@@ -1,25 +1,16 @@
-import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import csv
-import random
 import pandas as pd
 import os
 from preprocessing import process_table, merge_table, get_rating_
 import numpy as np
 from memory_based import user_based, item_based
 from model_based import MatrixFactorization, singular_value_decomposition
-from evaluation import recommend, evaluation_func
+from evaluation import recommend
+from main import read_data
 
 def data_preprocessing(area_code, user_visit):
-    area = {1: "수도권", 2: "동부권", 3: "서부권", 4: "도서지역"}
-    def read_data(key):
-        visit_data = pd.read_csv(os.path.join("dataset", area[key], "tn_visit_area_info_방문지정보.csv"))
-        travel_data = pd.read_csv(os.path.join("dataset", area[key], "tn_travel_여행.csv"))
-        user_data = pd.read_csv(os.path.join("dataset", area[key], "tn_traveller_master_여행객 Master.csv"))
-
-        return visit_data, travel_data, user_data
-
     def add_user(dic, user_visit_rating_matrix, dataset):
         user_id = 'z000001'
         user_visit_rating_matrix = user_visit_rating_matrix.T
@@ -172,6 +163,3 @@ def recommend_mf(area_code, user_visit):
     recommend_list = recommend(dataset, user_visit_rating_matrix.T[rating_matrix_index], mf_result, rating_matrix_index, 8.25)
     
     return recommend_list
-
-if __name__ == "__main__":
-    print(recommend_mf(1, {'108하늘계단': [5, 5, 5]}))

@@ -72,7 +72,7 @@ class MatrixFactorization():
 
             # print status
             if self._verbose == True and ((epoch + 1) % 10 == 0):
-                print("Iteration: %d ; cost = %.4f" % (epoch + 1, cost))
+                print("Iteration: %d : cost = %.4f" % (epoch + 1, cost))
         print("End Matrix Factorization ", round(time.time() - start_time, 3), " sec")
 
     def cost(self):

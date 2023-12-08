@@ -53,12 +53,12 @@ def evaluate_model(area_code=1):
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
     dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
-
     rating_matrix = model_eval(user_visit_rating_matrix)
     rating_matrix_index = rating_matrix.index
-    
+    #
     # collaborative filtering
     # User-Based
     user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
@@ -80,13 +80,13 @@ def evaluate_model(area_code=1):
     mf_result = factorizer.test(rating_matrix_index)
     evaluation_func(mf_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
-    # # save the file
+    # save the file
     save_csv(area_code,
              dataset=dataset,
              processed_user_data=processed_user_data,
              processed_visit_data=processed_visit_data,
              processed_travel_data=processed_travel_data,
-             rating_matrix=rating_matrix,
+             rating_matrix=rating_matrix.T,
              user_based=user_based_result,
              item_based=item_based_result,
              svd=svd_result,
@@ -94,4 +94,4 @@ def evaluate_model(area_code=1):
 
 
 if __name__ == "__main__":
-    evaluate_model(2)
+    evaluate_model(1)
