@@ -67,12 +67,12 @@ def evaluate_model(area_code=1):
     rating_matrix_index = rating_matrix.index
 
     # collaborative filtering
-    user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
-    evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
+    # user_based_result = user_based(rating_matrix.copy(), np.array(rating_matrix_index))
+    # evaluation_func(user_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
 
     item_based_result = item_based(rating_matrix.T.copy(), np.array(rating_matrix_index))
     evaluation_func(item_based_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 8.25)
-
+    exit()
     # Model-based Filterting
     svd_result = singular_value_decomposition(rating_matrix.copy(), rating_matrix_index, n=1000)
     evaluation_func(svd_result.copy(), user_visit_rating_matrix.T[rating_matrix_index].copy(), 0.2)
@@ -98,7 +98,7 @@ def evaluate_model(area_code=1):
 
 if __name__ == "__main__":
     # user_recommend(1, {'경복궁': (4, 5, 5), '108하늘계단': (5, 4, 5)})
-    evaluate_model(1)
+    evaluate_model(2)
 
     # user input 받기
     # 재방문의향, 추천의향, 만족도 순서
