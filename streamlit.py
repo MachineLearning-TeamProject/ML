@@ -4,9 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from streamlit_searchbox import st_searchbox
 import csv
-from predict import recommend_content 
-from main import user_recommend
-
+import webbrowser
 
 # Session State also supports attribute based syntax
 # ----------------------------------------
@@ -47,6 +45,10 @@ if 'recommend_rating' not in st.session_state:
     
 if 'visited_id' not in st.session_state:
     st.session_state['visited_id'] = []
+
+if 'go_to_info' not in st.session_state:
+    st.session_state['go_to_info'] = True
+    
 
 @st.cache_data()
 def request_endpoint(url):
@@ -136,16 +138,16 @@ if st.session_state['select_voyage_stage'] == True:
         search_visit_area,
         key="visit_area_searchbox",
     )
+    st.caption('선택된 곳들: ' + str(set(st.session_state['selected_values'])))
 
     if st.button('가본 곳 추가하기'):
         st.session_state['selected_values'] = st.session_state['selected_values'] + [selected_value]
-        # st.session_state['selected_values'] = st.session_state['selected_values'].append(selected_value)
-        # selected_values.append(selected_value)
-        st.text(st.session_state['selected_values'])
-
+        st.experimental_rerun() 
+    
     if st.button('가본 곳 추가 완료'):
         st.session_state['select_voyage_stage'] = False
         st.session_state['rating_stage'] = True
+        st.session_state['selected_values'] = list(set(st.session_state['selected_values']))
         st.experimental_rerun()
 
 # -------------------------------
@@ -188,74 +190,100 @@ if st.session_state['recommendation_stage'] == True:
     # 그러면 여기서는 그냥 버튼 누르면 추천 받는 거로 해도 될 듯
 
     if st.button("비슷한 여행지 추천 받기"):
-        tmp_dict = {}
-        # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
-        for idx, voyage in enumerate(st.session_state['selected_values']):
-            tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
-        # with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
-            # recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
-        print(tmp_dict)
-        st.balloons()
-        # [1] User based filtering method
-        st.markdown("# User-based filtering method")
-        url = f"http://localhost:8080/user_based"
-        data = {
-            "region": st.session_state['selected_region'],
-            "user_visit": tmp_dict
-        }
-        response = requests.post(url, json=data) 
-        st.write(response.json())
-        st.divider()
-
-        # [2] Memory based filtering method
-        st.markdown("# Memory-based filtering method")
-        url = f"http://localhost:8080/memory_based"
-        data = {
-            "region": st.session_state['selected_region'],
-            "user_visit": tmp_dict
-        }
-        response = requests.post(url, json=data) 
-        st.write(response.json())
-        st.divider()
-
-        # [3] content based filtering method
-        st.markdown("# Content-based filtering method")
-        # print(st.session_state['visit_area_dict'])
-        for visited_area_name in st.session_state['selected_values']:
-            
-            visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
-            st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
-            st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
-            # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
-            
-            url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
-            response = requests.get(url)
+            tmp_dict = {}
+            # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
+            for idx, voyage in enumerate(st.session_state['selected_values']):
+                tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
+            # with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
+                # recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
+            print(tmp_dict)
+            st.balloons()
+            # [1] User based filtering method
+            st.markdown("# User-based filtering method")
+            with st.spinner("추천 중입니다... ❤️"):
+                url = f"http://localhost:8080/user_based"
+                data = {
+                    "region": st.session_state['selected_region'],
+                    "user_visit": tmp_dict
+                }
+                response = requests.post(url, json=data) 
             st.write(response.json())
+            st.divider()
 
-        st.divider()
+            # # [2] Memory based filtering method
+            # st.markdown("# Memory-based filtering method")
+            # with st.spinner("추천 중입니다... ❤️"):
+            #     url = f"http://localhost:8080/memory_based"
+            #     data = {
+            #         "region": st.session_state['selected_region'],
+            #         "user_visit": tmp_dict
+            #     }
+            #     response = requests.post(url, json=data) 
+            # st.write(response.json())
+            # st.divider()
 
-        # [4] model based filtering method - SVD
-        st.markdown("# SVD method")
-        url = f"http://localhost:8080/svd_based"
-        data = {
-            "region": st.session_state['selected_region'],
-            "user_visit": tmp_dict
-        }
-        response = requests.post(url, json=data) 
+            # # [3] content based filtering method
+            # st.markdown("# Content-based filtering method")
+            # # print(st.session_state['visit_area_dict'])
+            # with st.spinner("추천 중입니다... ❤️"):
+            #     for visited_area_name in st.session_state['selected_values']:
+                    
+            #         visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
+            #         st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+            #         st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
+            #         # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
+                    
+            #         url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
+            #         response = requests.get(url)
+            #         st.write(response.json())
+
+            # st.divider()
+
+            # # [4] model based filtering method - SVD
+            # st.markdown("# SVD method")
+            # with st.spinner("추천 중입니다... 10초 정도 소요됩니다 ❤️"):
+            #     url = f"http://localhost:8080/svd_based"
+            #     data = {
+            #         "region": st.session_state['selected_region'],
+            #         "user_visit": tmp_dict
+            #     }
+            #     response = requests.post(url, json=data) 
+            # st.write(response.json())
+            # st.divider()
+
+            # # [5] model based filtering method - Matrix Factorization
+            # st.markdown("# Matrix Factorization method")
+            # with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
+            #     url = f"http://localhost:8080/mf_based"
+            #     data = {
+            #         "region": st.session_state['selected_region'],
+            #         "user_visit": tmp_dict
+            #     }
+            #     response = requests.post(url, json=data) 
+            # st.write(response.json())
+            # # st.text(recommend_list[3])
+            st.divider()
+
+    # 정보 제공
+    st.markdown("### 가보고 싶은 곳이 생기셨나요?")
+
+    
+    value_to_search = st_searchbox(
+        search_visit_area,
+        key="visit_area_searchbox",
+    )       
+    if st.button('알아보기'):
+        url = 'https://map.naver.com/p/search/' + str(value_to_search)
+        webbrowser.open_new_tab(url)
+
+    if st.button('다른 사용자들의 평가 보기'):
+        visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
+        # st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+        st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
+        
+        url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
+        response = requests.get(url)
         st.write(response.json())
-        st.divider()
-
-        # [5] model based filtering method - Matrix Factorization
-        st.markdown("# Matrix Factorization method")
-        url = f"http://localhost:8080/mf_based"
-        data = {
-            "region": st.session_state['selected_region'],
-            "user_visit": tmp_dict
-        }
-        response = requests.post(url, json=data) 
-        st.write(response.json())
-        # st.text(recommend_list[3])
-        st.divider()
     
         
     
