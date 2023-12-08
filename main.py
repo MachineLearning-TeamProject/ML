@@ -60,6 +60,10 @@ def evaluate_model(area_code=1):
     processed_travel_data = process_table(travel_data, "travel")
     processed_user_data = process_table(user_data, "user")
     dataset = merge_table(processed_visit_data, processed_travel_data, processed_user_data)
+    
+    dataset.to_csv(os.path.join("dataset", "data_after_preprocessing", area[area_code], 'dataset') + ".csv")
+    
+    # assert 0
     # row : User, column : item
     user_visit_rating_matrix = dataset.pivot_table(index='TRAVELER_ID', columns='VISIT_ID', values='RATING').fillna(0)
 
@@ -98,7 +102,7 @@ def evaluate_model(area_code=1):
 
 if __name__ == "__main__":
     # user_recommend(1, {'경복궁': (4, 5, 5), '108하늘계단': (5, 4, 5)})
-    evaluate_model(2)
+    evaluate_model(4)
 
     # user input 받기
     # 재방문의향, 추천의향, 만족도 순서

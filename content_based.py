@@ -2,10 +2,11 @@ import pandas as pd
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+REGION = "도서지역"
 
 def preprocessing_for_content_based():
 
-    travel_table = pd.read_csv("dataset/data_after_preprocessing/수도권/dataset.csv")
+    travel_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/dataset.csv")
 
     # 미션
     mission_name = ['쇼핑', '테마파크, 놀이시설, 동/식물원 방문', '역사 유적지 방문', '시티투어', '야외 스포츠, 레포츠 활동',
@@ -44,7 +45,7 @@ def preprocessing_for_content_based():
     travel_table = travel_table.fillna(0)
 
     # user table 관련 tag
-    user_table = pd.read_csv("dataset/data_after_preprocessing/수도권/dataset.csv")
+    user_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/dataset.csv")
 
     # 여행스타일에 따른 조건 함수 정의
     def apply_travel_style(row):
@@ -141,14 +142,16 @@ def preprocessing_for_content_based():
     user_table.reset_index(inplace=True)
     merged_table.reset_index(inplace=True)
 
-    travel_table = travel_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
-    user_table = user_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
-    merged_table = merged_table[['VISIT_ID', 'VISIT_AREA_NM','TAG']]
+    print(travel_table)
+    travel_table = travel_table[['VISIT_ID','TAG']]
+    user_table = user_table[['VISIT_ID','TAG']]
+    merged_table = merged_table[['VISIT_ID','TAG']]
 
     # 결과를 CSV 파일로 저장
-    travel_table.to_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
-    user_table.to_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
-    merged_table.to_csv("dataset/data_after_preprocessing/content_based_combined.csv")
+    
+    travel_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_travel.csv")
+    user_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_user.csv")
+    merged_table.to_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_combined.csv")
 
 # def recommend(table):
     
@@ -212,26 +215,26 @@ if __name__ == "__main__":
     preprocessing_for_content_based()
     
     # Load the merged table from the CSV file
-    travel_table = pd.read_csv("dataset/data_after_preprocessing/content_based_only_travel.csv")
-    user_table = pd.read_csv("dataset/data_after_preprocessing/content_based_only_user.csv")
-    merged_table = pd.read_csv("dataset/data_after_preprocessing/content_based_combined.csv")
+    travel_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_travel.csv")
+    user_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_only_user.csv")
+    merged_table = pd.read_csv(f"dataset/data_after_preprocessing/{REGION}/content_based_combined.csv")
 
-    # Recommendation (Using only travel tag)
-    print("-------------------------------------------")
-    print("[1] Recommendation (Using only travel tag)")
-    print("-------------------------------------------")
+    # # Recommendation (Using only travel tag)
+    # print("-------------------------------------------")
+    # print("[1] Recommendation (Using only travel tag)")
+    # print("-------------------------------------------")
 
-    recommend(travel_table)
+    # recommend(travel_table)
 
-    # Recommendation (Using only user tag)
-    print("\n-------------------------------------------")
-    print("[2] Recommendation (Using only user tag)")
-    print("-------------------------------------------")
+    # # Recommendation (Using only user tag)
+    # print("\n-------------------------------------------")
+    # print("[2] Recommendation (Using only user tag)")
+    # print("-------------------------------------------")
     
-    recommend(user_table)
+    # recommend(user_table)
 
-    # Recommendation (Using travel & user tag)
-    print("\n-------------------------------------------")
-    print("[3] Recommendation (Using travel & user tag)")
-    print("-------------------------------------------")
-    recommend(merged_table)
+    # # Recommendation (Using travel & user tag)
+    # print("\n-------------------------------------------")
+    # print("[3] Recommendation (Using travel & user tag)")
+    # print("-------------------------------------------")
+    # recommend(merged_table)
