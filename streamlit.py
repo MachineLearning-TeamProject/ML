@@ -4,6 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
+from streamlit_star_rating import st_star_rating
 from streamlit_modal import Modal
 import csv
 import webbrowser
@@ -258,80 +259,49 @@ if st.session_state['recommendation_stage'] == True:
             st.write(response.json())
             st.divider()
 
-            # [5] model based filtering method - Matrix Factorization
-            st.markdown("# Matrix Factorization method")
-            with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
-                url = f"http://localhost:8080/mf_based"
-                data = {
-                    "region": st.session_state['selected_region'],
-                    "user_visit": tmp_dict
-                }
-                response = requests.post(url, json=data) 
-            st.write(response.json())
-            # st.text(recommend_list[3])
-            st.divider()
+            # # [5] model based filtering method - Matrix Factorization
+            # st.markdown("# Matrix Factorization method")
+            # with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
+            #     url = f"http://localhost:8080/mf_based"
+            #     data = {
+            #         "region": st.session_state['selected_region'],
+            #         "user_visit": tmp_dict
+            #     }
+            #     response = requests.post(url, json=data) 
+            # st.write(response.json())
+            # # st.text(recommend_list[3])
+            # st.divider()
 
-    
+    st.divider()
+    st.info(' 가고 싶은 곳이 생기셨나요? \n\n 아래 버튼을 클릭해 더 자세히 알아보세요!', icon="🚀")
 
+    value_to_search = st_searchbox(
+        search_visit_area,
+        key="visit_area_searchbox",
+    )
 
-    # # modal = Modal("여행지 정보", key="demo-modal")
-    # model = st.expander("Advanced options")
-    # # 정보 제공
-    # st.markdown("### 가보고 싶은 곳이 생기셨나요?")
+    if st.button('알아보기'):
+        url = 'https://map.naver.com/p/search/' + str(value_to_search)
+        webbrowser.open_new_tab(url)
 
-    
-    # value_to_search = st_searchbox(
-    #     search_visit_area,
-    #     key="visit_area_searchbox",
-    # )
-
-    
-    # if modal.is_open():
-    #     with modal.container():
-    #         # 배경화면 검은색으로
-    #         # html_string = \
-    #         # '''
-    #         # <head>
-    #         # <style>
-    #         # .modal-content {
-    #         #     background-color: black;
-    #         # }
-    #         # </style>
-    #         # </head>
-    #         # '''
-    #         # components.html(html_string)
+    if st.button('다른 사용자들의 평가 보기'):  
+        visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
+        st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다. ')
         
-    #         # 배경 검은색
-    #         # st.markdown("<style>body {background-color: #000000;}</style>", unsafe_allow_html=True)
+        with st.container(border = True):
+            url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
+            with st.spinner("정보를 가져오고 있습니다... ❤️"):
+                response = requests.get(url)
+            st.markdown("### " + str(response.json()['리뷰 수']) + "명이 평가했습니다.")
+            mean_satisfaction = float(response.json()['평균 만족도'])
+            st_star_rating(label = "평균 만족도) " + str(round(mean_satisfaction, 2)), maxValue = 5, size = 30,defaultValue = round(mean_satisfaction), key = "rating", read_only = True,  customCSS = "div {font-size: 10px;}"  )
             
-    #         st.write("")
-    #         visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
-    #         # st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+            mean_revisit_intention = float(response.json()['평균 재방문 의향'])
+            st_star_rating(label = "평균 재방문 의향) " + str(round(mean_revisit_intention, 2)), maxValue = 5, size = 30,defaultValue = round(mean_revisit_intention), key = "rating2", read_only = True,  customCSS = "div {font-size: 10px;}"  )
             
-    #         # st.markdown을 검은색 글씨로 바꿔줘 (st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.'))
-    #         st.markdown("<style>body {color: #ffffff;}</style>", unsafe_allow_html=True)
-    #         st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
+            mean_recommend_intention = float(response.json()['평균 추천 의향'])
+            st_star_rating(label = "평균 추천 의향) " + str(round(mean_recommend_intention, 2)), maxValue = 5, size = 30, defaultValue = round(mean_recommend_intention), key = "rating3", read_only = True,  customCSS = "div {font-size: 10px;}"  )
             
-    #         url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
-    #         response = requests.get(url)
-    #         st.write(response.json())
-
-            
-    #         value = st.checkbox("Check me")
-    #         st.write(f"Checkbox checked: {value}")
-
-    # if st.button('알아보기'):
-    #     url = 'https://map.naver.com/p/search/' + str(value_to_search)
-    #     webbrowser.open_new_tab(url)
-
-    # if st.button('다른 사용자들의 평가 보기'):  
-    #     modal.open()
-    #     visited_area_id = int(st.session_state['visit_area_dict'].get(str(value_to_search)))
-    #     st.markdown("#### " + value_to_search + '에 대한 다른 사용자들의 평가입니다.')
         
-    #     url = f"http://localhost:8080/{st.session_state['selected_region']}/info/{visited_area_id}"
-    #     response = requests.get(url)
-    #     st.write(response.json())
-    
+            
         
-    
