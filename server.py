@@ -1,16 +1,10 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 import uvicorn
-import pandas as pd
 from predict import recommend_content, recommend_user, recommend_item, recommend_svd, recommend_mf
 from info import get_info
 from pydantic import BaseModel
 
 app = FastAPI()
-
-@app.get("/")
-async def hello():
-    return {"hello":"world"}
 
 @app.get("/{region}/content_based/{visit_id}")
 async def content_based(region:str, visit_id: str):

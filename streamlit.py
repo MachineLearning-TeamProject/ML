@@ -1,11 +1,8 @@
 import requests
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
-import streamlit.components.v1 as components
 from streamlit_searchbox import st_searchbox
 from streamlit_star_rating import st_star_rating
-from streamlit_modal import Modal
 import csv
 import webbrowser
 
