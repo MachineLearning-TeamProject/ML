@@ -193,89 +193,87 @@ if st.session_state['rating_stage'] == True:
 # -------------------------------
 if st.session_state['recommendation_stage'] == True:
     st.info(' 이제 다 되었습니다! \n\n 아래 버튼을 클릭해 결과를 확인해보세요!', icon="😆")
-    # 비슷한 여행지 추천 받는 기능을 server.py에 fastapi 형태로 구현해줘
-    # 그리고 그걸 여기서 불러와서 쓰면 될 듯
-    # 그러면 여기서는 그냥 버튼 누르면 추천 받는 거로 해도 될 듯
-
+    
+    selected_model = st.selectbox('모델을 선택해주세요.',
+            ('User-based filtering method', 'Memory-based filtering method', 'Content-based filtering method', 'SVD method', 'Matrix-Factorization method'),
+            key = "key4")
+    
     if st.button("비슷한 여행지 추천 받기"):
+        with st.container(border = True):
             tmp_dict = {}
             # {st.session_state['selected_values'] : (st.session_state['revisit_rating'], st.session_state['recommend_rating'], st.session_state['satisfaction_rating'])} 형태로 딕셔너리로 저장되게 해 줘.
             for idx, voyage in enumerate(st.session_state['selected_values']):
                 tmp_dict[voyage] = (int(st.session_state['revisit_rating'][idx]), int(st.session_state['recommend_rating'][idx]), int(st.session_state['satisfaction_rating'][idx]))
-            # with st.spinner("추천 중입니다... 30초 정도 소요됩니다 ❤️"):
-                # recommend_list = user_recommend(area_code = 1, user_visit=tmp_dict)
-            print(tmp_dict)
-            st.balloons()
-            # [1] User based filtering method
-            st.markdown("# User-based filtering method")
-            with st.spinner("추천 중입니다... ❤️"):
-                url = f"http://localhost:8080/user_based"
-                data = {
-                    "region": st.session_state['selected_region'],
-                    "user_visit": tmp_dict
-                }
-                response = requests.post(url, json=data) 
-            st.write(response.json())
-            st.divider()
+            
+            if selected_model == 'User-based filtering method':
 
-            # [2] Memory based filtering method
-            st.markdown("# Memory-based filtering method")
-            with st.spinner("추천 중입니다... ❤️"):
-                url = f"http://localhost:8080/memory_based"
-                data = {
-                    "region": st.session_state['selected_region'],
-                    "user_visit": tmp_dict
-                }
-                response = requests.post(url, json=data) 
-            if response.json()['detail'] == "Not Found":
-                st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
-            else: 
+                st.markdown("# User-based filtering method")
+                with st.spinner("추천 중입니다... ❤️"):
+                    url = f"http://localhost:8080/user_based"
+                    data = {
+                        "region": st.session_state['selected_region'],
+                        "user_visit": tmp_dict
+                    }
+                    response = requests.post(url, json=data) 
                 st.write(response.json())
-            st.divider()
-
-            # [3] content based filtering method
-            st.markdown("# Content-based filtering method")
-            # print(st.session_state['visit_area_dict'])
-            with st.spinner("추천 중입니다... ❤️"):
+                
+            elif selected_model == 'Memory-based filtering method':
+                # [2] Memory based filtering method
+                st.markdown("# Memory-based filtering method")
+                with st.spinner("추천 중입니다... ❤️"):
+                    url = f"http://localhost:8080/memory_based"
+                    data = {
+                        "region": st.session_state['selected_region'],
+                        "user_visit": tmp_dict
+                    }
+                    response = requests.post(url, json=data) 
+                if response.json()['detail'] == "Not Found":
+                    st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
+                else: 
+                    st.write(response.json())
+                
+            elif selected_model == 'Content-based filtering method':
+                # [3] content based filtering method
+                st.markdown("# Content-based filtering method")
+                # print(st.session_state['visit_area_dict'])
                 for visited_area_name in st.session_state['selected_values']:
-                    
-                    visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
-                    st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
-                    st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
-                    # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
-                    
-                    url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
-                    response = requests.get(url)
-                    if len(response.json()) == 0:
-                        st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
-                    else: 
-                        st.write(response.json())
+                    with st.spinner("추천 중입니다... ❤️"):
+                        visited_area_id = int(st.session_state['visit_area_dict'].get(visited_area_name))
+                        st.session_state['visited_id'] = st.session_state['visited_id'] + [visited_area_id]
+                        st.markdown("#### " + visited_area_name + '과 비슷한 여행지입니다.')
+                        # FASTAPI인 http://localhost:8080/%EC%88%98%EB%8F%84%EA%B6%8C/content_based/3 호출
+                        
+                        url = f"http://localhost:8080/{st.session_state['selected_region']}/content_based/{visited_area_id}"
+                        response = requests.get(url)
+                        if len(response.json()) == 0:
+                            st.write("관련 정보가 부족해, 아직 추천해 드릴 수 없습니다 😢")
+                        else: 
+                            st.write(response.json())
                     # st.write(response.json())
 
-            st.divider()
-
-            # [4] model based filtering method - SVD
-            st.markdown("# SVD method")
-            with st.spinner("추천 중입니다... 10초 정도 소요됩니다 ❤️"):
-                url = f"http://localhost:8080/svd_based"
-                data = {
-                    "region": st.session_state['selected_region'],
-                    "user_visit": tmp_dict
-                }
-                response = requests.post(url, json=data) 
-            st.write(response.json())
-            st.divider()
-
-            # [5] model based filtering method - Matrix Factorization
-            st.markdown("# Matrix Factorization method")
-            with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
-                url = f"http://localhost:8080/mf_based"
-                data = {
-                    "region": st.session_state['selected_region'],
-                    "user_visit": tmp_dict
-                }
-                response = requests.post(url, json=data) 
-            st.write(response.json())
+            elif selected_model == 'SVD method':
+                # [4] model based filtering method - SVD
+                st.markdown("# SVD method")
+                with st.spinner("추천 중입니다... 10초 정도 소요됩니다 ❤️"):
+                    url = f"http://localhost:8080/svd_based"
+                    data = {
+                        "region": st.session_state['selected_region'],
+                        "user_visit": tmp_dict
+                    }
+                    response = requests.post(url, json=data) 
+                st.write(response.json())
+                
+            elif selected_model == 'Matrix-Factorization method':
+                # [5] model based filtering method - Matrix Factorization
+                st.markdown("# Matrix Factorization method")
+                with st.spinner("추천 중입니다... 20초 정도 소요됩니다 ❤️"):
+                    url = f"http://localhost:8080/mf_based"
+                    data = {
+                        "region": st.session_state['selected_region'],
+                        "user_visit": tmp_dict
+                    }
+                    response = requests.post(url, json=data) 
+                st.write(response.json())
 
     st.divider()
     st.info(' 가고 싶은 곳이 생기셨나요? \n\n 아래 버튼을 클릭해 더 자세히 알아보세요!', icon="🚀")
