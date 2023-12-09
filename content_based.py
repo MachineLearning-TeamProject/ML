@@ -164,4 +164,4 @@ def preprocessing_for_content_based(region):
 
 if __name__ == "__main__":
     # Uncomment the line below if preprocessing is necessary
-    # preprocessing_for_content_based("수도권")
+    preprocessing_for_content_based("수도권")
